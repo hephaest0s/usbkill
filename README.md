@@ -6,4 +6,4 @@ Unfinished project! Expect improvements to come.
 
 But it does work and is effective.
 
-python3 usbkill.py
+To run: python3 usbkill.py
