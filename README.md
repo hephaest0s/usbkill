@@ -6,4 +6,4 @@ Unfinished project! Expect improvements to come.
 
 But it does work and is effective.
 
-To run: python3 usbkill.py
+To run: sudo python3 usbkill.py
