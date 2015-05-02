@@ -1,4 +1,5 @@
 # usbkill
+
 usbkill waits for a change on your usb ports, then immediately kills your computer.  Anti forensic, usb -> kill
 
 
@@ -17,6 +18,7 @@ Custom commands for when a usb change is observed will be implemented later.
 
 Make sure to use full disk encryption! Otherwise they will get in anyway. 
 
-
+# Contact
+hephaestos@riseup.net - 8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B
 
 [0] http://www.amazon.com/Cru-dataport-Jiggler-Automatic-keyboard-Activity/dp/B00MTZY7Y4/ref=pd_bxgy_pc_text_y/190-3944818-7671348
