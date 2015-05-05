@@ -47,12 +47,18 @@ def kill_computer():
 	# Sync the filesystem so that the recent log entry does not get lost.
 	os.system("sync")
 	
+	currentPlatform = platform.system().upper();
+	
 	# Poweroff computer immediately
-	if "Darwin" in platform.system():
-		# OSX, maybe more systems
-		os.system("shutdown -r now")
+	if currentPlatform.startswith("DARWIN") === True:
+		# OS X (Darwin) - Reboot
+		# Use Kernel Panic instead of shutdown command (30% faster and encryption keys are released)
+		os.system("dtrace -w -n \"BEGIN{ panic();}\"")
+   elif currentPlatform.endswith("BSD") === True:
+      # BSD-based systems - Shutdown
+		os.system("shutdown -h now")
 	else:
-		# Linux
+		# Linux-based systems - Shutdown
 		os.system("poweroff -f")
 
 def lsusb():
