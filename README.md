@@ -21,7 +21,7 @@ If you are attacked this way, you can use this as an anti-forensic measure.
 
 > **[!] Important**: Make sure to use full disk encryption! Otherwise they will get in anyway. 
 
-> **Tip**: Additionally, you may use a cord to attach a usb key to your wrist. Then insert the key into your computer and start usbkill. If they steal your computer, the USB will be removed and the computer shuts down immediately.
+> **Tip**: Additionally, you may use a cord to attach a USB key to your wrist. Then insert the key into your computer and start usbkill. If they steal your computer, the USB will be removed and the computer shuts down immediately.
 
 ### Additional requirement for OS X users
 
