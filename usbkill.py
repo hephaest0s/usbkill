@@ -34,7 +34,7 @@ def log(msg):
 	os.system("echo '' >> " + logfile)
 	
 	# Log the message that needed to be logged:
-	os.system("echo '" + str(time) + " " + msg + "' >> " + logfile)
+	os.system("echo '" + str(time()) + " " + msg + "' >> " + logfile)
 	
 	# Log current usb state:
 	os.system("echo 'Current state:' >> " + logfile)
@@ -120,7 +120,7 @@ def loop(whitelisted_devices, sleep_time):
 	acceptable_devices = set(start_devices + whitelisted_devices)
 	
 	# Write to logs that loop is starting:
-	msg = "Started patrolling the USB ports every", sleep_time, "seconds..."
+	msg = "Started patrolling the USB ports every " + str(sleep_time) + " seconds..."
 	log(msg)
 	print "\n\n", msg
 	
