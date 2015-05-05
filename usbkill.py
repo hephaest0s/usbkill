@@ -153,10 +153,13 @@ if __name__=="__main__":
 	# Make sure there is a logging folder
 	if not os.path.isdir("/var/log/usbkill/"):
 		os.system("mkdir /var/log/usbkill/")
+		
+	# Make sure there is the setting folder
+	if not os.path.isdir("/etc/usbkill/"):
+		os.system("mkdir /etc/usbkill/")
 	
 	# Make sure settings file is available
 	settings_template(filename)
-	
 
 	# Register handlers for clean exit of loop
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
