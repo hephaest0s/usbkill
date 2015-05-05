@@ -34,8 +34,7 @@ def log(msg):
 	os.system("echo '' >> " + logfile)
 	
 	# Log the message that needed to be logged:
-	# This errored out on me, will look at later.
-	#os.system("echo '" + str(time) + " " + msg + "' >> " + logfile)
+	os.system("echo '" + str(time) + " " + msg + "' >> " + logfile)
 	
 	# Log current usb state:
 	os.system("echo 'Current state:' >> " + logfile)
