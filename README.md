@@ -12,7 +12,7 @@ sudo python3 usbkill.py
 
 ### Why?
 
-In case the police or other thugs come busting in (or steal your laptop from you when you are at a public library like happened to Ross) you can use this as an anti-forensic measure. 
+In case the police or other thugs come busting in (or steal your laptop from you when you are at a public library like happened to Ross). You can use this as an anti-forensic measure. 
 
 The police commonly uses a « [mouse jiggler](http://www.amazon.com/Cru-dataport-Jiggler-Automatic-keyboard-Activity/dp/B00MTZY7Y4/ref=pd_bxgy_pc_text_y/190-3944818-7671348) » to keep the screensaver and sleep mode from activating.
 
