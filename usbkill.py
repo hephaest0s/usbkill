@@ -56,7 +56,7 @@ def kill_computer():
 		os.system("poweroff -f")
 
 def lsusb():
-	# A python version of the command 'lsusb' that returns a list of connected usbids
+	# A python version of the command 'lsusb' that returns a list of connected usb ids
 	df = subprocess.check_output("lsusb", shell=True).decode('utf-8')
 	devices = []
 	for line in df.split('\n'):
@@ -76,9 +76,9 @@ def settings_template(filename):
 		# Pre-populate the settings file if it does not exist yet
 		f = open(filename, 'w')
 		f.write("# whitelist command lists the usb ids that you want whitelisted\n")
-		f.write("# find the correct usbid for your trusted usb using the command 'lsusb'\n")
-		f.write("# usbid looks something line 0123:9abc\n")
-		f.write("# Be warned! other parties can copy your trusted usbid to another usb device!\n")
+		f.write("# find the correct usb id for your trusted usb using the command 'lsusb'\n")
+		f.write("# usb id looks something line 0123:9abc\n")
+		f.write("# Be warned! other parties can copy your trusted usb id to another usb device!\n")
 		f.write("# use whitelist command and single space separation as follows:\n")
 		f.write("# whitelist usbid1 usbid2 etc\n")
 		f.write("whitelist \n\n")
