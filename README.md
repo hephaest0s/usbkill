@@ -1,4 +1,4 @@
-![usbkill](https://github.com/pwnsdx/usbkill/blob/master/Resources/USBKill.jpg?raw=true)
+![usbkill](https://github.com/pwnsdx/usbkill/blob/master/Resources/USBKillBanner.jpg?raw=true)
 
 « usbkill » is an anti-forensic kill-switch that waits for a change on your USB ports and then immediately shuts down your computer.
 
