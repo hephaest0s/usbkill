@@ -92,12 +92,19 @@ def load_settings(filename):
 	lines = f.readlines()
 	f.close()
 	
+	#read output of lsusb, print list
+	usbcut = "lsusb | cut -d \" \" -f 6-20 "
+	u = subprocess.Popen(usbcut, stdout=subprocess.PIPE, shell=True)
+	usblist = u.communicate()[0]
+	print "\n\tList of USBs in use: \n", usblist
+	
 	# Find the only two supported settings
 	devices = None
 	sleep_time = None
 	for line in lines:
 		if line[:10] == "whitelist ":
 			devices = line.replace("\n","").replace("  "," ").split(" ")[1:]
+			print "\nWhitelisted: ", devices
 		if line[:6] == "sleep ":
 			sleep_time = float(line.replace("\n","").replace("  "," ").split(" ").pop())
 
@@ -115,7 +122,7 @@ def loop(whitelisted_devices, sleep_time):
 	# Write to logs that loop is starting:
 	msg = "Started patrolling the USB ports every " + str(sleep_time) + " seconds..."
 	log(msg)
-	print(msg)
+	print "\n\n", msg
 	
 	# Main loop
 	while True:
