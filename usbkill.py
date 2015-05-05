@@ -29,15 +29,12 @@ help_message = "usbkill is a simple program with one goal: quickly shutdown the 
 
 def log(msg):
 	logfile = " /var/log/usbkill/usbkill.log"
-	
-	# Empty line to separate log enties
-	os.system("echo '' >> " + logfile)
-	
-	# Log the message that needed to be logged:
-	os.system("echo '" + str(time()) + " " + msg + "' >> " + logfile)
+
+	with open(logfile, 'a') as log:
+		contents = '\n{0} {1}\nCurrent state:'.format(str(time()), msg)
+		log.write(contents)
 	
 	# Log current usb state:
-	os.system("echo 'Current state:' >> " + logfile)
 	os.system("lsusb >> " + logfile)
 	
 def kill_computer():
@@ -81,23 +78,21 @@ def settings_template(filename):
 	# Make sure there is a settings file
 	if not os.path.isfile(filename):
 		# Pre-populate the settings file if it does not exist yet
-		f = open(filename, 'w')
-		f.write("# whitelist command lists the usb ids that you want whitelisted\n")
-		f.write("# find the correct usbid for your trusted usb using the command 'lsusb'\n")
-		f.write("# usbid looks something line 0123:9abc\n")
-		f.write("# Be warned! other parties can copy your trusted usbid to another usb device!\n")
-		f.write("# use whitelist command and single space separation as follows:\n")
-		f.write("# whitelist usbid1 usbid2 etc\n")
-		f.write("whitelist \n\n")
-		f.write("# allow for a certain amount of sleep time between checks, e.g. 0.5 seconds:\n")
-		f.write("sleep 0.5\n")
-		f.close()
+		with open(filename, 'w') as f:
+			f.write("# whitelist command lists the usb ids that you want whitelisted\n")
+			f.write("# find the correct usbid for your trusted usb using the command 'lsusb'\n")
+			f.write("# usbid looks something line 0123:9abc\n")
+			f.write("# Be warned! other parties can copy your trusted usbid to another usb device!\n")
+			f.write("# use whitelist command and single space separation as follows:\n")
+			f.write("# whitelist usbid1 usbid2 etc\n")
+			f.write("whitelist \n\n")
+			f.write("# allow for a certain amount of sleep time between checks, e.g. 0.5 seconds:\n")
+			f.write("sleep 0.5\n")
 
 def load_settings(filename):
 	# read all lines of settings file
-	f = open(filename, 'r')
-	lines = f.readlines()
-	f.close()
+	with open(filename, 'r') as f:
+		lines = f.readlines()
 	
 	# Find the only two supported settings
 	devices = None
