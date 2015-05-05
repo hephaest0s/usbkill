@@ -22,6 +22,9 @@ from time import time, sleep
 # We compile this function beforehand for efficiency.
 DEVICE_RE = re.compile(".+ID\s(?P<id>\w+:\w+)")
 
+# Set the settings filename here
+filename = '/etc/usbkill/settings';
+
 help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe usb id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
 
 def log(msg):
@@ -79,7 +82,7 @@ def settings_template(filename):
 		f.write("sleep 0.5\n")
 		f.close()
 
-def load_settings(filename='/etc/usbkill/settings'):
+def load_settings(filename):
 	# read all lines of settings file
 	f = open(filename, 'r')
 	lines = f.readlines()
@@ -103,7 +106,7 @@ def loop():
 	# Allows only whitelisted usb devices to connect!
 	# Allows no usb device that wat present during program start to disconnect!
 	start_devices = lsusb()
-	whitelisted_devices, sleep_time = load_settings()
+	whitelisted_devices, sleep_time = load_settings(filename)
 	acceptable_devices = set(start_devices + whitelisted_devices)
 	
 	# Write to logs that loop is starting:
