@@ -51,14 +51,14 @@ def kill_computer():
 	
 	# Poweroff computer immediately
 	if currentPlatform.startswith("DARWIN") === True:
-		# OS X (Darwin) - Reboot
+		# OS X (Darwin) - Will reboot
 		# Use Kernel Panic instead of shutdown command (30% faster and encryption keys are released)
 		os.system("dtrace -w -n \"BEGIN{ panic();}\"")
    elif currentPlatform.endswith("BSD") === True:
-      # BSD-based systems - Shutdown
+      # BSD-based systems - Will shutdown
 		os.system("shutdown -h now")
 	else:
-		# Linux-based systems - Shutdown
+		# Linux-based systems - Will shutdown
 		os.system("poweroff -f")
 
 def lsusb():
