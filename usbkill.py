@@ -28,16 +28,13 @@ SETTINGS_FILE = '/etc/usbkill/settings';
 help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe usb id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
 
 def log(msg):
-	logfile = " /var/log/usbkill/usbkill.log"
-	
-	# Empty line to separate log enties
-	os.system("echo '' >> " + logfile)
-	
-	# Log the message that needed to be logged:
-	os.system("echo '" + str(time()) + " " + msg + "' >> " + logfile)
+	logfile = "/var/log/usbkill/usbkill.log"
+
+	with open(logfile, 'a+') as log:
+		contents = '\n{0} {1}\nCurrent state:'.format(str(time()), msg)
+		log.write(contents)
 	
 	# Log current usb state:
-	os.system("echo 'Current state:' >> " + logfile)
 	os.system("lsusb >> " + logfile)
 	
 def kill_computer():
@@ -67,11 +64,10 @@ def lsusb():
 	df = subprocess.check_output("lsusb", shell=True).decode('utf-8')
 	devices = []
 	for line in df.split('\n'):
-		if line:
-		    info = DEVICE_RE.match(line)
-		    if info:
-		        dinfo = info.groupdict()
-		        devices.append(dinfo['id'])
+	    info = DEVICE_RE.match(line)
+	    if info:
+	        dinfo = info.groupdict()
+	        devices.append(dinfo['id'])
 	return devices
 
 def settings_template(filename):
@@ -81,23 +77,21 @@ def settings_template(filename):
 	# Make sure there is a settings file
 	if not os.path.isfile(filename):
 		# Pre-populate the settings file if it does not exist yet
-		f = open(filename, 'w')
-		f.write("# whitelist command lists the usb ids that you want whitelisted\n")
-		f.write("# find the correct usbid for your trusted usb using the command 'lsusb'\n")
-		f.write("# usbid looks something line 0123:9abc\n")
-		f.write("# Be warned! other parties can copy your trusted usbid to another usb device!\n")
-		f.write("# use whitelist command and single space separation as follows:\n")
-		f.write("# whitelist usbid1 usbid2 etc\n")
-		f.write("whitelist \n\n")
-		f.write("# allow for a certain amount of sleep time between checks, e.g. 0.5 seconds:\n")
-		f.write("sleep 0.5\n")
-		f.close()
+		with open(filename, 'w') as f:
+			f.write("# whitelist command lists the usb ids that you want whitelisted\n")
+			f.write("# find the correct usbid for your trusted usb using the command 'lsusb'\n")
+			f.write("# usbid looks something line 0123:9abc\n")
+			f.write("# Be warned! other parties can copy your trusted usbid to another usb device!\n")
+			f.write("# use whitelist command and single space separation as follows:\n")
+			f.write("# whitelist usbid1 usbid2 etc\n")
+			f.write("whitelist \n\n")
+			f.write("# allow for a certain amount of sleep time between checks, e.g. 0.5 seconds:\n")
+			f.write("sleep 0.5\n")
 
 def load_settings(filename):
 	# read all lines of settings file
-	f = open(filename, 'r')
-	lines = f.readlines()
-	f.close()
+	with open(filename, 'r') as f:
+		lines = f.readlines()
 	
 	# Find the only two supported settings
 	devices = None
