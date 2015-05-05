@@ -34,7 +34,7 @@ def log(msg):
 	os.system("echo '' >> " + logfile)
 	
 	# Log the message that needed to be logged:
-	os.system("echo '" + str(time) + " " + msg + "' >> " + logfile)
+	os.system("echo '" + str(time()) + " " + msg + "' >> " + logfile)
 	
 	# Log current usb state:
 	os.system("echo 'Current state:' >> " + logfile)
@@ -70,7 +70,7 @@ def lsusb():
 def settings_template(filename):
 	# Make sure there is the settings folder
 	if not os.path.isdir("/etc/usbkill/"):
-		os.system("mkdir /etc/usbkill/")
+		os.mkdir("/etc/usbkill/")
 	# Make sure there is a settings file
 	if not os.path.isfile(filename):
 		# Pre-populate the settings file if it does not exist yet
@@ -113,7 +113,7 @@ def loop(whitelisted_devices, sleep_time):
 	acceptable_devices = set(start_devices + whitelisted_devices)
 	
 	# Write to logs that loop is starting:
-	msg = "Started patrolling the USB ports every", sleep_time, "seconds..."
+	msg = "Started patrolling the USB ports every " + str(sleep_time) + " seconds..."
 	log(msg)
 	print(msg)
 	
@@ -154,7 +154,7 @@ if __name__=="__main__":
 	
 	# Make sure there is a logging folder
 	if not os.path.isdir("/var/log/usbkill/"):
-		os.system("mkdir /var/log/usbkill/")
+		os.mkdir("/var/log/usbkill/")
 	
 	# Make sure settings file is available
 	settings_template(SETTINGS_FILE)
