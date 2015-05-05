@@ -52,6 +52,8 @@ def kill_computer():
 	
 	if s == "Darwin":
 		os.system("shutdown -h now")
+		# Even faster: produce a Kernel Panic (just waiting for confirmation that a kernel panic actually release correctly FileVault keys)
+		#os.system("dtrace -w -n \"BEGIN{ panic();}\"")
 	else:
 		os.system("poweroff -f")
 
