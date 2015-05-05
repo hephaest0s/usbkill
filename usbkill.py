@@ -107,6 +107,8 @@ def loop():
 	acceptable_devices = set(start_devices + whitelisted_devices)
 	
 	# Write to logs that loop is starting:
+	print("Started patrolling the USB ports every", sleep_time, "seconds.")
+	print("System: ", platform.system())
 	# Note: Do not work on OS X, I don't know why
    #log(sleepTimeText)
 	
