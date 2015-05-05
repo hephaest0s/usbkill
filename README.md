@@ -25,7 +25,7 @@ If you are attacked this way, you can use this as an anti-forensic measure.
 
 ### Additional requirement for OS X users
 
-In order to make usbkill working on OS X, you have to install *lsusb* port along with *python3* by using [brew](http://brew.sh):
+In order to make usbkill work on OS X, you have to install *lsusb* port along with *python3* by using [brew](http://brew.sh):
 
 ```shell
 brew update && \
