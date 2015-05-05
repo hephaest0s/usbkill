@@ -1,10 +1,8 @@
-# usbkill
+![usbkill](https://github.com/pwnsdx/usbkill/blob/master/Resources/USBKill.jpg?raw=true)
 
-"usbkill" waits for a change on your USB ports, then immediately kills your computer.  Anti forensic, usb -> kill
+« usbkill » is a killswitch that wait for a change on your USB ports and then immediately shutdown your computer when there are. Anti-forensics.
 
-Unfinished project! Expect improvements to come.
-
-But it does work and is effective.
+> The project is still in early development stage but it does work and is effective. Expect improvements to come. Custom commands for when a USB change is observed will be implemented later.
 
 To run:
 
@@ -14,13 +12,15 @@ sudo python3 usbkill.py
 
 ### Why?
 
-In case the police comes busting in, or steals your laptop from you when you are at a public library (as with Ross).
+Imagine your government comes busting in, or steals your laptop when you are at a public library (as with Ross). The police commonly use a « [mouse jiggler](http://www.amazon.com/Cru-dataport-Jiggler-Automatic-keyboard-Activity/dp/B00MTZY7Y4/ref=pd_bxgy_pc_text_y/190-3944818-7671348) » to keep the screensaver and sleep mode from activating.
 
-The police will use a « [mouse jiggler](http://www.amazon.com/Cru-dataport-Jiggler-Automatic-keyboard-Activity/dp/B00MTZY7Y4/ref=pd_bxgy_pc_text_y/190-3944818-7671348) » to keep the screensaver and sleep mode from activating. If this happens you would like your computer to shut down immediately. Additionally, you may use a cord to attach a usb key to your wrist. Then insert the key into your computer and start usbkill. If they then steal your computer, the usb will be removed and the computer shuts down immediately.
+If something like this happens to you, you would like to shutdown your computer immediately. This is what usbkill does.
 
-Custom commands for when a usb change is observed will be implemented later.
+Of course your government could be replaced by an adversary like a hacker or anyone else who want your informations.
 
-Make sure to use full disk encryption! Otherwise they will get in anyway. 
+> **Important**: Make sure to use full disk encryption! Otherwise they will get in anyway. 
+
+> **Tip**: Additionally, you may use a cord to attach a usb key to your wrist. Then insert the key into your computer and start usbkill. If they steal your computer, the USB will be removed and the computer shuts down immediately.
 
 ### Note for OS X users
 
