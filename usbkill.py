@@ -28,9 +28,9 @@ SETTINGS_FILE = '/etc/usbkill/settings';
 help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe usb id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
 
 def log(msg):
-	logfile = " /var/log/usbkill/usbkill.log"
+	logfile = "/var/log/usbkill/usbkill.log"
 
-	with open(logfile, 'a') as log:
+	with open(logfile, 'a+') as log:
 		contents = '\n{0} {1}\nCurrent state:'.format(str(time()), msg)
 		log.write(contents)
 	
@@ -64,11 +64,10 @@ def lsusb():
 	df = subprocess.check_output("lsusb", shell=True).decode('utf-8')
 	devices = []
 	for line in df.split('\n'):
-		if line:
-		    info = DEVICE_RE.match(line)
-		    if info:
-		        dinfo = info.groupdict()
-		        devices.append(dinfo['id'])
+	    info = DEVICE_RE.match(line)
+	    if info:
+	        dinfo = info.groupdict()
+	        devices.append(dinfo['id'])
 	return devices
 
 def settings_template(filename):
