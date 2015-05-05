@@ -51,7 +51,7 @@ def kill_computer():
 	s = platform.system();
 	
 	if s == "Darwin":
-		os.system("shutdown -r now")
+		os.system("shutdown -h now")
 	else:
 		os.system("poweroff -f")
 
