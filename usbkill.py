@@ -39,7 +39,7 @@ def log(msg):
 	
 def kill_computer():
 	# Log what is happening:
-	log("Detected usb change. Dumping lsusb and killing computer...")
+	log("Detected USB change. Dumping lsusb and killing computer...")
 	
 	# Sync the filesystem so that the recent log entry does not get lost.
 	os.system("sync")
