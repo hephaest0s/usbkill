@@ -22,9 +22,6 @@ from time import time, sleep
 # We compile this function beforehand for efficiency.
 DEVICE_RE = re.compile(".+ID\s(?P<id>\w+:\w+)")
 
-# Get the current platform
-CURRENT_PLATFORM = platform.system().upper();
-
 # Set the settings filename here
 SETTINGS_FILE = '/etc/usbkill/settings';
 
@@ -49,13 +46,16 @@ def kill_computer():
 	
 	# Sync the filesystem so that the recent log entry does not get lost.
 	os.system("sync")
-		
+	
+	# Get the current platform
+	CURRENT_PLATFORM = platform.system().upper()
+	
 	# Poweroff computer immediately
-	if CURRENT_PLATFORM.startswith("DARWIN") == True:
+	if CURRENT_PLATFORM.startswith("DARWIN"):
 		# OS X (Darwin) - Will reboot
 		# Use Kernel Panic instead of shutdown command (30% faster and encryption keys are released)
 		os.system("dtrace -w -n \"BEGIN{ panic();}\"")
-	elif CURRENT_PLATFORM.endswith("BSD") == True:
+	elif CURRENT_PLATFORM.endswith("BSD"):
 		# BSD-based systems - Will shutdown
 		os.system("shutdown -h now")
 	else:
