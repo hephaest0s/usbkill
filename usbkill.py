@@ -23,7 +23,7 @@ from time import time, sleep
 DEVICE_RE = re.compile(".+ID\s(?P<id>\w+:\w+)")
 
 # Set the settings filename here
-filename = '/etc/usbkill/settings';
+SETTINGS_FILE = '/etc/usbkill/settings';
 
 help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe usb id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
 
@@ -47,14 +47,12 @@ def kill_computer():
 	# Sync the filesystem so that the recent log entry does not get lost.
 	os.system("sync")
 	
-	# This function will poweroff your computer immediately
-	s = platform.system();
-	
-	if s == "Darwin":
-		os.system("shutdown -h now")
-		# Even faster: produce a Kernel Panic (just waiting for confirmation that a kernel panic actually release correctly FileVault keys)
-		#os.system("dtrace -w -n \"BEGIN{ panic();}\"")
+	# Poweroff computer immediately
+	if "Darwin" in platform.system():
+		# OSX, maybe more systems
+		os.system("shutdown -r now")
 	else:
+		# Linux
 		os.system("poweroff -f")
 
 def lsusb():
@@ -70,17 +68,21 @@ def lsusb():
 	return devices
 
 def settings_template(filename):
+	# Make sure there is the settings folder
+	if not os.path.isdir("/etc/usbkill/"):
+		os.system("mkdir /etc/usbkill/")
+	# Make sure there is a settings file
 	if not os.path.isfile(filename):
 		# Pre-populate the settings file if it does not exist yet
 		f = open(filename, 'w')
-		f.write("# Whitelist command lists the usb ids that you want whitelisted\n")
-		f.write("# Find the correct usbid for your trusted usb using the command 'lsusb'\n")
+		f.write("# whitelist command lists the usb ids that you want whitelisted\n")
+		f.write("# find the correct usbid for your trusted usb using the command 'lsusb'\n")
 		f.write("# usbid looks something line 0123:9abc\n")
-		f.write("# Be warned! Other parties can copy your trusted usbid to another usb device!\n")
-		f.write("# Use whitelist command and single space separation as follows:\n")
-		f.write("# Whitelist usbid1 usbid2 etc\n")
+		f.write("# Be warned! other parties can copy your trusted usbid to another usb device!\n")
+		f.write("# use whitelist command and single space separation as follows:\n")
+		f.write("# whitelist usbid1 usbid2 etc\n")
 		f.write("whitelist \n\n")
-		f.write("# Allow for a certain amount of sleep time between checks, e.g. 0.5 seconds:\n")
+		f.write("# allow for a certain amount of sleep time between checks, e.g. 0.5 seconds:\n")
 		f.write("sleep 0.5\n")
 		f.close()
 
@@ -103,19 +105,17 @@ def load_settings(filename):
 	assert sleep_time > 0.0, "Please allow for positive non-zero 'sleep' delay between usb checks!"
 	return devices, sleep_time
 	
-def loop():
+def loop(whitelisted_devices, sleep_time):
 	# Main loop that checks every 'sleep_time' seconds if computer should be killed.
 	# Allows only whitelisted usb devices to connect!
-	# Allows no usb device that wat present during program start to disconnect!
+	# Does not allow usb device that was present during program start to disconnect!
 	start_devices = lsusb()
-	whitelisted_devices, sleep_time = load_settings(filename)
 	acceptable_devices = set(start_devices + whitelisted_devices)
 	
 	# Write to logs that loop is starting:
-	print("Started patrolling the USB ports every", sleep_time, "seconds.")
-	print("System: ", platform.system())
-	# Note: Do not work on OS X, I don't know why
-   #log(sleepTimeText)
+	msg = "Started patrolling the USB ports every", sleep_time, "seconds..."
+	log(msg)
+	print(msg)
 	
 	# Main loop
 	while True:
@@ -155,18 +155,17 @@ if __name__=="__main__":
 	# Make sure there is a logging folder
 	if not os.path.isdir("/var/log/usbkill/"):
 		os.system("mkdir /var/log/usbkill/")
-		
-	# Make sure there is the setting folder
-	if not os.path.isdir("/etc/usbkill/"):
-		os.system("mkdir /etc/usbkill/")
 	
 	# Make sure settings file is available
-	settings_template(filename)
+	settings_template(SETTINGS_FILE)
 
 	# Register handlers for clean exit of loop
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
 		signal.signal(sig, exit_handler)
 		
+	# Load settings
+	whitelisted_devices, sleep_time = load_settings(SETTINGS_FILE)
+	
 	# Start main loop
-	loop()
+	loop(whitelisted_devices, sleep_time)
 	
