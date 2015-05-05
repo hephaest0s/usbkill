@@ -15,6 +15,7 @@
 
 import re
 import subprocess
+import platform
 import os, sys, signal
 from time import time, sleep
 
@@ -44,7 +45,12 @@ def kill_computer():
 	os.system("sync")
 	
 	# This function will poweroff your computer immediately
-	os.system("poweroff -f")
+	s = platform.system();
+	
+	if s == "Darwin":
+		os.system("shutdown -r now")
+	else:
+		os.system("poweroff -f")
 
 def lsusb():
 	# A python version of the command 'lsusb' that returns a list of connected usbids
@@ -101,7 +107,8 @@ def loop():
 	acceptable_devices = set(start_devices + whitelisted_devices)
 	
 	# Write to logs that loop is starting:
-	log("Started patrolling the usb ports every", sleep_time, "seconds.")
+	# Note: Do not work on OS X, I don't know why
+   #log(sleepTimeText)
 	
 	# Main loop
 	while True:
