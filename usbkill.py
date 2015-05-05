@@ -53,7 +53,8 @@ def kill_computer():
 		os.system("shutdown -r now")
 	else:
 		# Linux
-		os.system("poweroff -f")
+		os.system("echo 1 > /proc/sys/kernel/sysrq")
+		os.system("echo b > /proc/sysrq-trigger")
 
 def lsusb():
 	# A python version of the command 'lsusb' that returns a list of connected usbids
