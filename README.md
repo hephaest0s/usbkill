@@ -1,8 +1,8 @@
 ![usbkill](https://github.com/pwnsdx/usbkill/blob/master/Resources/USBKill.jpg?raw=true)
 
-« usbkill » is a killswitch that wait for a change on your USB ports and then immediately shutdown your computer when there are. Anti-forensics.
+« usbkill » is a kill-switch that waits for a change on your USB ports and then immediately shuts down your computer. Anti-forensic.
 
-> The project is still in early development stage but it does work and is effective. Expect improvements to come. Custom commands for when a USB change is observed will be implemented later.
+> The project is still under development but it does work and is effective. Expect improvements to come. Custom commands for when a USB change is observed will be implemented.
 
 To run:
 
@@ -12,11 +12,11 @@ sudo python3 usbkill.py
 
 ### Why?
 
-Imagine your government comes busting in, or steals your laptop when you are at a public library (as with Ross). The police commonly use a « [mouse jiggler](http://www.amazon.com/Cru-dataport-Jiggler-Automatic-keyboard-Activity/dp/B00MTZY7Y4/ref=pd_bxgy_pc_text_y/190-3944818-7671348) » to keep the screensaver and sleep mode from activating.
+In case the police or other thugs come busting in (or steal your laptop from you when you are at a public library like happened to Ross) you can use this as an anti-forensic measure. 
 
-If something like this happens to you, you would like to shutdown your computer immediately. This is what usbkill does.
+The police commonly uses a « [mouse jiggler](http://www.amazon.com/Cru-dataport-Jiggler-Automatic-keyboard-Activity/dp/B00MTZY7Y4/ref=pd_bxgy_pc_text_y/190-3944818-7671348) » to keep the screensaver and sleep mode from activating.
 
-Of course your government could be replaced by an adversary like a hacker or anyone else who want your informations.
+If you are attacked this way, you would like for your computer to shut down your immediately.
 
 > **Important**: Make sure to use full disk encryption! Otherwise they will get in anyway. 
 
