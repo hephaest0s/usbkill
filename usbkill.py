@@ -73,14 +73,14 @@ def settings_template(filename):
 	if not os.path.isfile(filename):
 		# Pre-populate the settings file if it does not exist yet
 		f = open(filename, 'w')
-		f.write("# whitelist command lists the usb ids that you want whitelisted\n")
-		f.write("# find the correct usbid for your trusted usb using the command 'lsusb'\n")
+		f.write("# Whitelist command lists the usb ids that you want whitelisted\n")
+		f.write("# Find the correct usbid for your trusted usb using the command 'lsusb'\n")
 		f.write("# usbid looks something line 0123:9abc\n")
-		f.write("# Be warned! other parties can copy your trusted usbid to another usb device!\n")
-		f.write("# use whitelist command and single space separation as follows:\n")
-		f.write("# whitelist usbid1 usbid2 etc\n")
+		f.write("# Be warned! Other parties can copy your trusted usbid to another usb device!\n")
+		f.write("# Use whitelist command and single space separation as follows:\n")
+		f.write("# Whitelist usbid1 usbid2 etc\n")
 		f.write("whitelist \n\n")
-		f.write("# allow for a certain amount of sleep time between checks, e.g. 0.5 seconds:\n")
+		f.write("# Allow for a certain amount of sleep time between checks, e.g. 0.5 seconds:\n")
 		f.write("sleep 0.5\n")
 		f.close()
 
