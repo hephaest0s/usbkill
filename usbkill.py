@@ -70,7 +70,7 @@ def lsusb():
 def settings_template(filename):
 	# Make sure there is the settings folder
 	if not os.path.isdir("/etc/usbkill/"):
-		os.system("mkdir /etc/usbkill/")
+		os.mkdir("/etc/usbkill/")
 	# Make sure there is a settings file
 	if not os.path.isfile(filename):
 		# Pre-populate the settings file if it does not exist yet
@@ -154,7 +154,7 @@ if __name__=="__main__":
 	
 	# Make sure there is a logging folder
 	if not os.path.isdir("/var/log/usbkill/"):
-		os.system("mkdir /var/log/usbkill/")
+		os.mkdir("/var/log/usbkill/")
 	
 	# Make sure settings file is available
 	settings_template(SETTINGS_FILE)
