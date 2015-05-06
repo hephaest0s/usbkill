@@ -56,18 +56,18 @@ def log(msg):
         # Log current usb state:
         f.write('Current state:\n')
     os.system("lsusb >> " + log.path)
-
 log.path = None
+
 
 def kill_computer(cfg):
     # Log what is happening:
     log("Detected USB change. Dumping lsusb and killing computer...")
 
-    if cfg['kill_script']:
-        os.system(cfg['kill_script'])
-        log("Kill script executed - delay before continuing")
+    if cfg['kill_cmd']:
+        os.system(cfg['kill_cmd'])
+        log("Kill script executed - delay before continuing...")
         # Don't enter kill-loop
-        sleep(60)
+        sleep(120)
         return
 
     # Buildin method of killing computer
@@ -88,9 +88,18 @@ def kill_computer(cfg):
         os.system("poweroff -f")
 
     # Don't enter kill-loop
-    log("Buildin kill executed - delay before continuing")
-    sleep(60)
+    log("Buildin kill executed - delay before continuing...")
+    sleep(120)
 
+def is_unlocked(cfg):
+    "Check if screen/computer is unlocked"
+    if not cfg['unlock_cmd']:
+        return False
+    ret = os.system(cfg['unlock_cmd'])
+    if ret == 0:
+        return True
+    else:
+        return False
 
 def lsusb():
     "Return a list of connected devices on tracked BUSes"
@@ -126,7 +135,8 @@ def load_settings(filename):
     cfg = {
         'sleep_time': float(section['sleep']),
         'whitelist': [d.strip() for d in section['whitelist'].split(' ')],
-        'kill_script': section['kill_script'],
+        'kill_cmd': section['kill_cmd'],
+        'unlock_cmd': section['unlock_cmd'],
         'kill_on_missing': int(section['kill_on_missing']),
         'log_file': section['log_file'],
     }
@@ -154,18 +164,25 @@ def loop(cfg):
         # Check that all current devices are in the set of acceptable devices
         for device in current_devices:
             if device not in acceptable_devices:
-                kill_computer(cfg)
+                if is_unlocked(cfg):
+                    log("Whitelisting device {0} - device unlocked".format(device))
+                    acceptable_devices.add(device)
+                else:
+                    kill_computer(cfg)
 
         # Check that all start devices are still present in current devices
         if cfg['kill_on_missing'] == 1:
             for device in start_devices:
                 if device not in current_devices:
-                    kill_computer(cfg)
+                    if is_unlocked(cfg):
+                        log("Removing device {0} from start devices - device unlocked".format(device))
+                        start_devices.remove(device)
+                    else:
+                        kill_computer(cfg)
 
         sleep(cfg['sleep_time'])
 
 def exit_handler(signum, frame):
-    print("\nExiting because exit signal was received\n")
     log("Exiting because exit signal was received")
     sys.exit(0)
 
