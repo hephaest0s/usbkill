@@ -83,13 +83,10 @@ def lsusb():
 		return devices
 	else:
 		# A python version of the command 'lsusb' that returns a list of connected usbids
-		df = subprocess.check_output("lsusb", shell=True).decode('utf-8').strip()
+		df = DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
 		devices = []
-		for line in df.split('\n'):
-			 info = DEVICE_RE[0].match(line)
-			 if info:
-				  dinfo = info.groupdict()
-				  devices.append(dinfo['id'])
+		for usb in df:
+			devices.append(usb)
 		return devices
 
 def settings_template(filename):
