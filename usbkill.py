@@ -28,6 +28,9 @@ DEVICE_RE = re.compile(".+ID\s(?P<id>\w+:\w+)")
 # Set the global settings path
 SETTINGS_FILE = '/etc/usbkill/settings.ini'
 
+# Get the current platform
+CURRENT_PLATFORM = platform.system().upper()
+
 help_message = """usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.
 It logs to /var/log/usbkill/
 You can configure a whitelist of usb ids that are acceptable to insert and the remove.
@@ -61,9 +64,6 @@ def kill_computer():
     # Sync the filesystem so that the recent log entry does not get lost.
     os.system("sync")
 
-    # Get the current platform
-    CURRENT_PLATFORM = platform.system().upper()
-
     # Poweroff computer immediately
     if CURRENT_PLATFORM.startswith("DARWIN"):
         # OS X (Darwin) - Will reboot
@@ -78,14 +78,26 @@ def kill_computer():
 
 def lsusb():
     # A python version of the command 'lsusb' that returns a list of connected usbids
-    df = subprocess.check_output("lsusb", shell=True).decode('utf-8')
+    import glob
     devices = []
-    for line in df.split('\n'):
-        if line:
-            info = DEVICE_RE.match(line)
-            if info:
-                dinfo = info.groupdict()
-                devices.append(dinfo['id'])
+    if CURRENT_PLATFORM == "LINUX":
+        path = '/sys/bus/usb/devices/*/idVendor'
+        vendors = glob.glob(path)
+        for entry in vendors:
+            base = os.path.dirname(entry)
+            vendor = open(os.path.join(base, 'idVendor')).read().strip()
+            product = open(os.path.join(base, 'idProduct')).read().strip()
+            device = vendor + ":" + product
+            devices.append(device)
+    else:
+        df = subprocess.check_output("lsusb", shell=True).decode('utf-8')
+        for line in df.split('\n'):
+            if line:
+                info = DEVICE_RE.match(line)
+                if info:
+                    dinfo = info.groupdict()
+                    devices.append(dinfo['id'])
+
     return devices
 
 
