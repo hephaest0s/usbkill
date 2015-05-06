@@ -41,17 +41,20 @@ help_message = "usbkill is a simple program with one goal: quickly shutdown the 
 
 def log(msg):
 	logfile = "/var/log/usbkill/usbkill.log"
-
 	with open(logfile, 'a+') as log:
 		contents = '\n{0} {1}\nCurrent state:'.format(str(time()), msg)
 		log.write(contents)
 	
-	# Log current usb state:
-	os.system("lsusb >> " + logfile)
-	
+	# Log current USB state
+	if CURRENT_PLATFORM.startswith("DARWIN"):
+		os.system("system_profiler SPUSBDataType >> " + logfile)
+	else:
+		os.system("lsusb >> " + logfile)
+		
 def kill_computer():
+   
 	# Log what is happening:
-	log("Detected USB change. Dumping lsusb and killing computer...")
+	log("Detected an USB change. Dumping the list of connected devices and killing the computer...")
 	
 	# Sync the filesystem so that the recent log entry does not get lost.
 	os.system("sync")
@@ -93,6 +96,7 @@ def settings_template(filename):
 	# Make sure there is the settings folder
 	if not os.path.isdir("/etc/usbkill/"):
 		os.mkdir("/etc/usbkill/")
+		
 	# Make sure there is a settings file
 	if not os.path.isfile(filename):
 		# Pre-populate the settings file if it does not exist yet
