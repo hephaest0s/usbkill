@@ -1,17 +1,26 @@
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
- 
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Contact: hephaestos@riseup.net - 8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B
+#             _     _     _ _ _  
+#            | |   | |   (_) | | 
+#  _   _  ___| |__ | |  _ _| | | 
+# | | | |/___)  _ \| |_/ ) | | | 
+# | |_| |___ | |_) )  _ (| | | | 
+# |____/(___/|____/|_| \_)_|\_)_)
+#
+#
+# Hephaestos <hephaestos@riseup.net> - 8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 
 import re
 import subprocess
@@ -20,32 +29,34 @@ import os, sys, signal
 from time import time, sleep
 
 # We compile this function beforehand for efficiency.
-DEVICE_RE = re.compile(".+ID\s(?P<id>\w+:\w+)")
+DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile(".+Product\sID:\s0x(\w+)\n.+Vendor\sID:\s0x(\w+)") ]
 
 # Set the settings filename here
 SETTINGS_FILE = '/etc/usbkill/settings';
+	
+# Get the current platform
+CURRENT_PLATFORM = platform.system().upper()
 
-help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe usb id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
+help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe USB id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
 
 def log(msg):
 	logfile = "/var/log/usbkill/usbkill.log"
-
 	with open(logfile, 'a+') as log:
 		contents = '\n{0} {1}\nCurrent state:'.format(str(time()), msg)
 		log.write(contents)
 	
-	# Log current usb state:
-	os.system("lsusb >> " + logfile)
-	
+	# Log current USB state
+	if CURRENT_PLATFORM.startswith("DARWIN"):
+		os.system("system_profiler SPUSBDataType >> " + logfile)
+	else:
+		os.system("lsusb >> " + logfile)
+		
 def kill_computer():
 	# Log what is happening:
-	log("Detected USB change. Dumping lsusb and killing computer...")
+	log("Detected a USB change. Dumping the list of connected devices and killing the computer...")
 	
 	# Sync the filesystem so that the recent log entry does not get lost.
 	os.system("sync")
-	
-	# Get the current platform
-	CURRENT_PLATFORM = platform.system().upper()
 	
 	# Poweroff computer immediately
 	if CURRENT_PLATFORM.startswith("DARWIN"):
@@ -60,19 +71,18 @@ def kill_computer():
 
 def lsusb():
 	# A python version of the command 'lsusb' that returns a list of connected usbids
-	df = subprocess.check_output("lsusb", shell=True).decode('utf-8')
-	devices = []
-	for line in df.split('\n'):
-	    info = DEVICE_RE.match(line)
-	    if info:
-	        dinfo = info.groupdict()
-	        devices.append(dinfo['id'])
-	return devices
+	if CURRENT_PLATFORM.startswith("DARWIN"):
+		# Use OS X system_profiler (native and 60% faster than lsusb port)
+		return DEVICE_RE[1].findall(subprocess.check_output("system_profiler SPUSBDataType", shell=True).decode('utf-8').strip())
+	else:
+		# Use lsusb on linux and bsd
+		return DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
 
 def settings_template(filename):
 	# Make sure there is the settings folder
 	if not os.path.isdir("/etc/usbkill/"):
 		os.mkdir("/etc/usbkill/")
+		
 	# Make sure there is a settings file
 	if not os.path.isfile(filename):
 		# Pre-populate the settings file if it does not exist yet
@@ -102,7 +112,7 @@ def load_settings(filename):
 			sleep_time = float(line.replace("\n","").replace("  "," ").split(" ").pop())
 
 	assert not None in [devices, sleep_time], "Please set the 'sleep' and 'whitelist' parameters in '/etc/usbkill/settings' !"
-	assert sleep_time > 0.0, "Please allow for positive non-zero 'sleep' delay between usb checks!"
+	assert sleep_time > 0.0, "Please allow for positive non-zero 'sleep' delay between USB checks!"
 	return devices, sleep_time
 	
 def loop(whitelisted_devices, sleep_time):
