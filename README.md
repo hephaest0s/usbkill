@@ -18,8 +18,6 @@ There are 3 reasons (maybe more?) to use this tool:
 - You don't want someone to install backdoors or malware on your computer or to retrieve documents from your computer via USB.
 - You want to improve the security of your (Full Disk Encrypted) home or corporate server (e.g. Your Raspberry).
 
-You may use ubkill as an anti-forensic measure.
-
 > **[!] Important**: Make sure to use full disk encryption! Otherwise they will get in anyway. 
 
 > **Tip**: Additionally, you may use a cord to attach a USB key to your wrist. Then insert the key into your computer and start usbkill. If they steal your computer, the USB will be removed and the computer shuts down immediately.
