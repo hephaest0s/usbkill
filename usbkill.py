@@ -61,8 +61,6 @@ log.path = None
 
 def kill_computer(cfg):
     # Log what is happening:
-    log("Detected USB change. Dumping lsusb and killing computer...")
-
     if cfg['kill_cmd']:
         os.system(cfg['kill_cmd'])
         log("Kill script executed - delay before continuing...")
@@ -85,7 +83,8 @@ def kill_computer(cfg):
         os.system("shutdown -h now")
     else:
         # Linux-based systems - Will shutdown
-        os.system("poweroff -f")
+        #os.system("poweroff -f")
+        pass
 
     # Don't enter kill-loop
     log("Buildin kill executed - delay before continuing...")
@@ -140,7 +139,6 @@ def load_settings(filename):
         'kill_on_missing': int(section['kill_on_missing']),
         'log_file': section['log_file'],
     }
-    print(cfg)
     return cfg
 
 
@@ -154,7 +152,7 @@ def loop(cfg):
     acceptable_devices = set(start_devices + cfg['whitelist'])
 
     # Write to logs that loop is starting:
-    log("Started patrolling the USB ports every {0} seconds...".format(cfg['whitelist']))
+    log("Started patrolling the USB ports every {0} seconds...".format(cfg['sleep_time']))
 
     # Main loop
     while True:
@@ -168,6 +166,7 @@ def loop(cfg):
                     log("Whitelisting device {0} - device unlocked".format(device))
                     acceptable_devices.add(device)
                 else:
+                    log("New not-whitelisted device detected - killing the computer...")
                     kill_computer(cfg)
 
         # Check that all start devices are still present in current devices
@@ -178,6 +177,7 @@ def loop(cfg):
                         log("Removing device {0} from start devices - device unlocked".format(device))
                         start_devices.remove(device)
                     else:
+                        log("Start device disappeared - killing the computer...")
                         kill_computer(cfg)
 
         sleep(cfg['sleep_time'])
@@ -186,6 +186,22 @@ def exit_handler(signum, frame):
     log("Exiting because exit signal was received")
     sys.exit(0)
 
+
+def test(cfg):
+    "Test kill procedure"
+    if is_unlocked(cfg):
+        log("Device is currently unlocked (visible devices may change)")
+    else:
+        log("Device is locked (changes in visible devices cause a kill)")
+
+    print()
+    log("WARNING: Executing a test of a kill procedure in 10 seconds")
+    sleep(5)
+    log("5 seconds left... (Ctrl-C to cancel)")
+    sleep(5)
+    log("Executing a kill procedure")
+    os.system('sync')
+    kill_computer(cfg)
 
 def main():
     "Check arguments and run program"
@@ -196,9 +212,9 @@ def main():
     #               action="store_true",
     #               help="show help")
 
-    p.add_argument("--test-kill", dest="test",
+    p.add_argument("--test", dest="test",
                    action="store_true",
-                   help="test kill procedure")
+                   help="test kill and unlock procedure")
 
     args = p.parse_args()
 
@@ -219,7 +235,11 @@ def main():
     log("Starting with whitelist: " + ",".join(cfg['whitelist']) )
 
     # Start main loop
-    loop(cfg)
+
+    if args.test:
+        test(cfg)
+    else:
+        loop(cfg)
 
 
 if __name__=="__main__":
