@@ -140,6 +140,10 @@ def exit_handler(signum, frame):
 	sys.exit(0)
 
 if __name__=="__main__":
+	# Check for root user status
+	if not os.geteuid()==0:
+		sys.exit("\nYou must be root to run this script.\n")
+	
 	# Check arguments
 	args = sys.argv[1:]
 	if '-h' in args or '--help' in args:
