@@ -77,7 +77,7 @@ def kill_computer():
         os.system("poweroff -f")
 
 def lsusb():
-    # A python version of the command 'lsusb' that returns a list of connected usbids
+    "Return a list of connected devices on tracked BUSes"
     import glob
     devices = []
     if CURRENT_PLATFORM == "LINUX":
@@ -149,13 +149,16 @@ def exit_handler(signum, frame):
     sys.exit(0)
 
 
-if __name__=="__main__":
-    # Check arguments
-    args = sys.argv[1:]
-    if '-h' in args or '--help' in args:
-        sys.exit(help_message)
-    elif len(args) > 0:
-        sys.exit("\nArgument not understood. Can only understand -h\n")
+def main():
+    "Check arguments and run program"
+    import argparse
+    p = argparse.ArgumentParser(description="usbkill", epilog=help_message)
+
+    #p.add_argument("-h", "--help", dest="help",
+    #               action="store_true",
+    #               help="show help")
+    args = p.parse_args()
+
 
     # Check if program is run as root, else exit.
     # Root is needed to power off the computer.
@@ -179,3 +182,8 @@ if __name__=="__main__":
 
     # Start main loop
     loop(whitelisted_devices, sleep_time)
+
+
+
+if __name__=="__main__":
+    main()
