@@ -6,7 +6,7 @@
 
 To run:
 
-```shell
+```bash
 sudo python3 usbkill.py
 ```
 
@@ -27,7 +27,7 @@ If you are attacked this way, you can use this as an anti-forensic measure.
 
 In order to make usbkill work on OS X, you have to install *lsusb* port along with *python3* by using [brew](http://brew.sh):
 
-```shell
+```bash
 brew update && \
 brew tap jlhonora/lsusb && \
 brew install python3 && \
