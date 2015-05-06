@@ -24,13 +24,10 @@ There are 3 reasons (maybe more?) to use this tool:
 
 ### Additional requirement for OS X users
 
-In order to make usbkill work on OS X, you have to install *lsusb* port along with *python3* by using [brew](http://brew.sh):
+In order to make usbkill work on OS X, you have to install *python3* by using [brew](http://brew.sh):
 
 ```shell
-brew update && \
-brew tap jlhonora/lsusb && \
-brew install python3 && \
-brew install lsusb
+brew update && brew install python3
 ```
 
 ### Contact
