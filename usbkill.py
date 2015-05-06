@@ -49,8 +49,8 @@ def kill_computer():
 	
 	# Poweroff computer immediately
 	if CURRENT_PLATFORM.startswith("DARWIN"):
-		# OS X (Darwin) - Will halt ungracefully, without notifying apps
-		os.system("halt -q")
+		# OS X (Darwin) - Will halt ungracefully, without signaling apps
+		os.system("killall loginwindow Finder && halt -q")
 	elif CURRENT_PLATFORM.endswith("BSD"):
 		# BSD-based systems - Will shutdown
 		os.system("shutdown -h now")
