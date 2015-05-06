@@ -37,7 +37,7 @@ SETTINGS_FILE = '/etc/usbkill/settings';
 # Get the current platform
 CURRENT_PLATFORM = platform.system().upper()
 
-help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe USB id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
+help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of USB ids that are acceptable to insert and the remove.\nThe USB id can be found by running the command 'lsusb'.\nSettings can be changed in /etc/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
 
 def log(msg):
 	logfile = "/var/log/usbkill/usbkill.log"
