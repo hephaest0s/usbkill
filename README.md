@@ -4,10 +4,15 @@
 
 > The project is still under development but it does work and is effective. Expect improvements to come. Custom commands for when a USB change is observed will be implemented.
 
-To run:
+To run once:
 
 ```shell
 sudo python3 usbkill.py
+```
+
+To run the script as a background process:
+```shell
+nohup sudo python3 usbkill.py &
 ```
 
 ### Why?
