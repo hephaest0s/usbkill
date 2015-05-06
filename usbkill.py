@@ -41,25 +41,36 @@ In order to be able to shutdown the computer, this program needs to run as root.
 """
 
 def log(msg):
-    logfile = "/var/log/usbkill/usbkill.log"
+    line = str(datetime.now()) + ' ' + msg
+    print(line)
 
-    with open(logfile, 'a') as f:
+    if not log.path:
+        return
+    with open(log.path, 'a') as f:
         # Empty line to separate log enties
         f.write('\n')
 
         # Log the message that needed to be logged:
-        line = str(datetime.now()) + ' ' + msg
         f.write(line + '\n')
-        print(line)
 
         # Log current usb state:
         f.write('Current state:\n')
-    os.system("lsusb >> " + logfile)
+    os.system("lsusb >> " + log.path)
 
+log.path = None
 
-def kill_computer():
+def kill_computer(cfg):
     # Log what is happening:
     log("Detected USB change. Dumping lsusb and killing computer...")
+
+    if cfg['kill_script']:
+        os.system(cfg['kill_script'])
+        log("Kill script executed - delay before continuing")
+        # Don't enter kill-loop
+        sleep(60)
+        return
+
+    # Buildin method of killing computer
 
     # Sync the filesystem so that the recent log entry does not get lost.
     os.system("sync")
@@ -75,6 +86,11 @@ def kill_computer():
     else:
         # Linux-based systems - Will shutdown
         os.system("poweroff -f")
+
+    # Don't enter kill-loop
+    log("Buildin kill executed - delay before continuing")
+    sleep(60)
+
 
 def lsusb():
     "Return a list of connected devices on tracked BUSes"
@@ -97,7 +113,6 @@ def lsusb():
                 if info:
                     dinfo = info.groupdict()
                     devices.append(dinfo['id'])
-
     return devices
 
 
@@ -108,23 +123,28 @@ def load_settings(filename):
     config.read(['./settings.ini', SETTINGS_FILE])
     section = config['config']
 
-    sleep_time = float(section['sleep'])
-    devices = [d.strip() for d in section['whitelist'].split(' ')]
-    return devices, sleep_time
+    cfg = {
+        'sleep_time': float(section['sleep']),
+        'whitelist': [d.strip() for d in section['whitelist'].split(' ')],
+        'kill_script': section['kill_script'],
+        'kill_on_missing': int(section['kill_on_missing']),
+        'log_file': section['log_file'],
+    }
+    print(cfg)
+    return cfg
 
 
-def loop(whitelisted_devices, sleep_time):
+def loop(cfg):
     "Main loop"
 
     # Main loop that checks every 'sleep_time' seconds if computer should be killed.
     # Allows only whitelisted usb devices to connect!
     # Does not allow usb device that was present during program start to disconnect!
     start_devices = lsusb()
-    acceptable_devices = set(start_devices + whitelisted_devices)
+    acceptable_devices = set(start_devices + cfg['whitelist'])
 
     # Write to logs that loop is starting:
-    msg = "Started patrolling the USB ports every " + str(sleep_time) + " seconds..."
-    log(msg)
+    log("Started patrolling the USB ports every {0} seconds...".format(cfg['whitelist']))
 
     # Main loop
     while True:
@@ -134,14 +154,15 @@ def loop(whitelisted_devices, sleep_time):
         # Check that all current devices are in the set of acceptable devices
         for device in current_devices:
             if device not in acceptable_devices:
-                kill_computer()
+                kill_computer(cfg)
 
         # Check that all start devices are still present in current devices
-        for device in start_devices:
-            if device not in current_devices:
-                kill_computer()
+        if cfg['kill_on_missing'] == 1:
+            for device in start_devices:
+                if device not in current_devices:
+                    kill_computer(cfg)
 
-        sleep(sleep_time)
+        sleep(cfg['sleep_time'])
 
 def exit_handler(signum, frame):
     print("\nExiting because exit signal was received\n")
@@ -157,32 +178,31 @@ def main():
     #p.add_argument("-h", "--help", dest="help",
     #               action="store_true",
     #               help="show help")
-    args = p.parse_args()
 
+    p.add_argument("--test-kill", dest="test",
+                   action="store_true",
+                   help="test kill procedure")
+
+    args = p.parse_args()
 
     # Check if program is run as root, else exit.
     # Root is needed to power off the computer.
     if not os.geteuid() == 0:
         sys.exit("\nThis program needs to run as root.\n")
 
-
-    # Make sure there is a logging folder
-    if not os.path.isdir("/var/log/usbkill/"):
-        print("Creating log directory")
-        os.mkdir("/var/log/usbkill/")
-
     # Register handlers for clean exit of loop
     for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT]:
         signal.signal(sig, exit_handler)
 
     # Load settings
-    whitelisted_devices, sleep_time = load_settings(SETTINGS_FILE)
+    cfg = load_settings(SETTINGS_FILE)
 
-    log("Starting with whitelist: " + ",".join(whitelisted_devices) )
+    log.path = cfg['log_file']
+
+    log("Starting with whitelist: " + ",".join(cfg['whitelist']) )
 
     # Start main loop
-    loop(whitelisted_devices, sleep_time)
-
+    loop(cfg)
 
 
 if __name__=="__main__":
