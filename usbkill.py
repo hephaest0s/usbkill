@@ -6,7 +6,7 @@
 # |____/(___/|____/|_| \_)_|\_)_)
 #
 #
-# Copyright (C) 2015 Hephaestos <hephaestos@riseup.net> (8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B)
+# Hephaestos <hephaestos@riseup.net> - 8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ SETTINGS_FILE = '/etc/usbkill/settings';
 # Get the current platform
 CURRENT_PLATFORM = platform.system().upper()
 
-help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe usb id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
+help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of USB ids that are acceptable to insert and the remove.\nThe USB id can be found by running the command 'lsusb'.\nSettings can be changed in /etc/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
 
 def log(msg):
 	logfile = "/var/log/usbkill/usbkill.log"
@@ -52,9 +52,8 @@ def log(msg):
 		os.system("lsusb >> " + logfile)
 		
 def kill_computer():
-   
 	# Log what is happening:
-	log("Detected an USB change. Dumping the list of connected devices and killing the computer...")
+	log("Detected a USB change. Dumping the list of connected devices and killing the computer...")
 	
 	# Sync the filesystem so that the recent log entry does not get lost.
 	os.system("sync")
@@ -70,10 +69,8 @@ def kill_computer():
 		# Linux-based systems - Will shutdown
 		os.system("poweroff -f")
 
-	# Exit the process here so the shutdown command run only once
-	sys.exit(0)
-	
 def lsusb():
+	# A python version of the command 'lsusb' that returns a list of connected usbids
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		# Use OS X system_profiler (native and 60% faster than lsusb port)
 		df = DEVICE_RE[1].findall(subprocess.check_output("system_profiler SPUSBDataType", shell=True).decode('utf-8').strip())
@@ -82,12 +79,8 @@ def lsusb():
 			devices.append(usb[1] + ':' + usb[0])
 		return devices
 	else:
-		# A python version of the command 'lsusb' that returns a list of connected usbids
-		df = DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
-		devices = []
-		for usb in df:
-			devices.append(usb)
-		return devices
+		# Use lsusb on linux and bsd
+		return DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
 
 def settings_template(filename):
 	# Make sure there is the settings folder
@@ -123,7 +116,7 @@ def load_settings(filename):
 			sleep_time = float(line.replace("\n","").replace("  "," ").split(" ").pop())
 
 	assert not None in [devices, sleep_time], "Please set the 'sleep' and 'whitelist' parameters in '/etc/usbkill/settings' !"
-	assert sleep_time > 0.0, "Please allow for positive non-zero 'sleep' delay between usb checks!"
+	assert sleep_time > 0.0, "Please allow for positive non-zero 'sleep' delay between USB checks!"
 	return devices, sleep_time
 	
 def loop(whitelisted_devices, sleep_time):
