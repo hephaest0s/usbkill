@@ -18,7 +18,7 @@ There are 3 reasons (maybe more?) to use this tool:
 - You don't want someone to install backdoors or malware on your computer or to retrieve documents from your computer via USB.
 - You want to improve the security of your (Full Disk Encrypted) home or corporate server (e.g. Your Raspberry).
 
-If you are attacked this way, you can use this as an anti-forensic measure.
+If you feel concerned then you can use this as an anti-forensic measure.
 
 > **[!] Important**: Make sure to use full disk encryption! Otherwise they will get in anyway. 
 
