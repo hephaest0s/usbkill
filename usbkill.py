@@ -58,6 +58,9 @@ def kill_computer():
 		# Linux-based systems - Will shutdown
 		os.system("poweroff -f")
 
+	# Exit the process here so the shutdown command run only once
+	sys.exit(0)
+	
 def lsusb():
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		# Use OS X system_profiler (native and 60% faster than lsusb port)
