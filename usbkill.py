@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
@@ -18,26 +19,36 @@ import subprocess
 import platform
 import os, sys, signal
 from time import time, sleep
+from datetime import datetime
 
 # We compile this function beforehand for efficiency.
 DEVICE_RE = re.compile(".+ID\s(?P<id>\w+:\w+)")
 
 # Set the settings filename here
-SETTINGS_FILE = '/etc/usbkill/settings';
+SETTINGS_FILE = '/etc/usbkill/settings'
 
-help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe usb id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
+help_message = """usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.
+It logs to /var/log/usbkill/kills.log
+You can configure a whitelist of usb ids that are acceptable to insert and the remove.
+The usb id can be found by running the command 'lsusb'.
+Settings can be changed in /ect/usbkill/settings
+
+In order to be able to shutdown the computer, this program needs to run as root.
+"""
 
 def log(msg):
-    logfile = " /var/log/usbkill/usbkill.log"
+    logfile = "/var/log/usbkill/usbkill.log"
 
-    # Empty line to separate log enties
-    os.system("echo '' >> " + logfile)
+    with open(logfile, 'a') as f:
+        # Empty line to separate log enties
+        f.write('\n')
 
-    # Log the message that needed to be logged:
-    os.system("echo '" + str(time()) + " " + msg + "' >> " + logfile)
+        # Log the message that needed to be logged:
+        line = str(datetime.now()) + ' ' + msg + '\n'
+        f.write(line)
 
-    # Log current usb state:
-    os.system("echo 'Current state:' >> " + logfile)
+        # Log current usb state:
+        f.write('Current state:\n')
     os.system("lsusb >> " + logfile)
 
 def kill_computer():
@@ -95,9 +106,8 @@ def settings_template(filename):
 
 def load_settings(filename):
     # read all lines of settings file
-    f = open(filename, 'r')
-    lines = f.readlines()
-    f.close()
+    with open(filename, 'r') as f:
+        lines = f.readlines()
 
     # Find the only two supported settings
     devices = None
@@ -161,13 +171,14 @@ if __name__=="__main__":
 
     # Make sure there is a logging folder
     if not os.path.isdir("/var/log/usbkill/"):
+        print("Creating log directory")
         os.mkdir("/var/log/usbkill/")
 
     # Make sure settings file is available
     settings_template(SETTINGS_FILE)
 
     # Register handlers for clean exit of loop
-    for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
+    for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT]:
         signal.signal(sig, exit_handler)
 
     # Load settings
