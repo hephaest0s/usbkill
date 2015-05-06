@@ -1,15 +1,15 @@
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#	 This program is free software: you can redistribute it and/or modify
+#	 it under the terms of the GNU General Public License as published by
+#	 the Free Software Foundation, either version 3 of the License, or
+#	 (at your option) any later version.
  
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#	 This program is distributed in the hope that it will be useful,
+#	 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	 GNU General Public License for more details.
 
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#	 You should have received a copy of the GNU General Public License
+#	 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Contact: hephaestos@riseup.net - 8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B
 
@@ -20,10 +20,13 @@ import os, sys, signal
 from time import time, sleep
 
 # We compile this function beforehand for efficiency.
-DEVICE_RE = re.compile(".+ID\s(?P<id>\w+:\w+)")
+DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile(".+Product\sID:\s0x(\w+)\n.+Vendor\sID:\s0x(\w+)") ]
 
 # Set the settings filename here
 SETTINGS_FILE = '/etc/usbkill/settings';
+	
+# Get the current platform
+CURRENT_PLATFORM = platform.system().upper()
 
 help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of usb ids that are acceptable to insert and the remove.\nThe usb id can be found by running the command 'lsusb'.\nSettings can be changed in /ect/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
 
@@ -44,9 +47,6 @@ def kill_computer():
 	# Sync the filesystem so that the recent log entry does not get lost.
 	os.system("sync")
 	
-	# Get the current platform
-	CURRENT_PLATFORM = platform.system().upper()
-	
 	# Poweroff computer immediately
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		# OS X (Darwin) - Will halt ungracefully, without signaling apps
@@ -59,15 +59,23 @@ def kill_computer():
 		os.system("poweroff -f")
 
 def lsusb():
-	# A python version of the command 'lsusb' that returns a list of connected usbids
-	df = subprocess.check_output("lsusb", shell=True).decode('utf-8')
-	devices = []
-	for line in df.split('\n'):
-	    info = DEVICE_RE.match(line)
-	    if info:
-	        dinfo = info.groupdict()
-	        devices.append(dinfo['id'])
-	return devices
+	if CURRENT_PLATFORM.startswith("DARWIN"):
+		# Use OS X system_profiler (native and 60% faster than lsusb port)
+		df = DEVICE_RE[1].findall(subprocess.check_output("system_profiler SPUSBDataType", shell=True).decode('utf-8').strip())
+		devices = []
+		for usb in df:
+			devices.append(usb[1] + ':' + usb[0])
+		return devices
+	else:
+		# A python version of the command 'lsusb' that returns a list of connected usbids
+		df = subprocess.check_output("lsusb", shell=True).decode('utf-8').strip()
+		devices = []
+		for line in df.split('\n'):
+			 info = DEVICE_RE[0].match(line)
+			 if info:
+				  dinfo = info.groupdict()
+				  devices.append(dinfo['id'])
+		return devices
 
 def settings_template(filename):
 	# Make sure there is the settings folder
