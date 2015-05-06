@@ -70,11 +70,12 @@ def kill_computer():
 		os.system("poweroff -f")
 
 def lsusb():
+	# A python version of the command 'lsusb' that returns a list of connected usbids
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		# Use OS X system_profiler (native and 60% faster than lsusb port)
-		return DEVICE_RE[1].findall(subprocess.check_output("system_profiler SPUSBDataType", shell=True).decode
+		return DEVICE_RE[1].findall(subprocess.check_output("system_profiler SPUSBDataType", shell=True).decode('utf-8').strip())
 	else:
-		# A python version of the command 'lsusb' that returns a list of connected usbids
+		# Use lsusb on linux and bsd
 		return DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
 
 def settings_template(filename):
