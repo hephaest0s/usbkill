@@ -40,7 +40,7 @@ Settings can be changed in local directory or /etc/usbkill/settings.ini
 In order to be able to shutdown the computer, this program needs to run as root.
 """
 
-def log(msg):
+def log(msg, lsusb=False):
     line = str(datetime.now()) + ' ' + msg
     print(line)
 
@@ -54,18 +54,23 @@ def log(msg):
         f.write(line + '\n')
 
         # Log current usb state:
-        f.write('Current state:\n')
-    os.system("lsusb >> " + log.path)
+        if lsusb:
+            f.write('Current state:\n')
+    if lsusb:
+        os.system("lsusb >> " + log.path)
 log.path = None
 
 
 def kill_computer(cfg):
+    "Kill computer using buildin or external method"
+    if cfg['simulate']:
+        log("WARNING: Ignoring KILL procedure because of simulation mode")
+        return
+
     # Log what is happening:
     if cfg['kill_cmd']:
         os.system(cfg['kill_cmd'])
-        log("Kill script executed - delay before continuing...")
-        # Don't enter kill-loop
-        sleep(120)
+        log("Kill script executed...")
         return
 
     # Buildin method of killing computer
@@ -87,8 +92,7 @@ def kill_computer(cfg):
         pass
 
     # Don't enter kill-loop
-    log("Buildin kill executed - delay before continuing...")
-    sleep(120)
+    log("Buildin kill executed")
 
 def is_unlocked(cfg):
     "Check if screen/computer is unlocked"
@@ -148,37 +152,56 @@ def loop(cfg):
     # Main loop that checks every 'sleep_time' seconds if computer should be killed.
     # Allows only whitelisted usb devices to connect!
     # Does not allow usb device that was present during program start to disconnect!
-    start_devices = lsusb()
-    acceptable_devices = set(start_devices + cfg['whitelist'])
+    known_devices = set(lsusb())
 
     # Write to logs that loop is starting:
-    log("Started patrolling the USB ports every {0} seconds...".format(cfg['sleep_time']))
+    log("Started patrolling the USB ports every {0} seconds...".format(cfg['sleep_time']),
+        lsusb=True)
 
     # Main loop
     while True:
         # List the current usb devices
-        current_devices = lsusb()
+        current_devices = set(lsusb())
+        new_devices = current_devices - known_devices
+        removed_devices = known_devices - current_devices
 
         # Check that all current devices are in the set of acceptable devices
-        for device in current_devices:
-            if device not in acceptable_devices:
-                if is_unlocked(cfg):
-                    log("Whitelisting device {0} - device unlocked".format(device))
-                    acceptable_devices.add(device)
-                else:
-                    log("New not-whitelisted device detected - killing the computer...")
-                    kill_computer(cfg)
+        for device in new_devices:
+            if device in cfg['whitelist']:
+                log("INFO: New whitelisted device connected {0}".format(device), lsusb=True)
+                known_devices.add(device)
+                continue
+
+            # New unknown device was connected
+            if is_unlocked(cfg):
+                log("INFO: New unknown device {0} connected while unlocked".format(device), lsusb=True)
+                known_devices.add(device)
+                continue
+
+            # New unknown device connected while not unlocked.
+            log("WARNING: New not-whitelisted device {0} detected - killing the computer...".format(device),
+                lsusb=True)
+            kill_computer(cfg)
+            known_devices.add(device)
 
         # Check that all start devices are still present in current devices
-        if cfg['kill_on_missing'] == 1:
-            for device in start_devices:
-                if device not in current_devices:
-                    if is_unlocked(cfg):
-                        log("Removing device {0} from start devices - device unlocked".format(device))
-                        start_devices.remove(device)
-                    else:
-                        log("Start device disappeared - killing the computer...")
-                        kill_computer(cfg)
+        if removed_devices:
+            desc = ", ".join(removed_devices)
+            if is_unlocked(cfg):
+                log("INFO: Device/s {0} disconnected while unlocked".format(desc))
+                known_devices -= removed_devices
+                continue
+
+            # We are locked. And something got disconnected
+            if cfg['kill_on_missing'] != 1:
+                log("INFO: Device/s {0} disconnected but kill_on_missing disabled".format(desc))
+                known_devices -= removed_devices
+                continue
+
+            log("WARNING: Device/s {0} disconnected while locked - killing the computer...".format(desc))
+
+            kill_computer(cfg)
+            known_devices -= removed_devices
 
         sleep(cfg['sleep_time'])
 
@@ -216,6 +239,9 @@ def main():
                    action="store_true",
                    help="test kill and unlock procedure")
 
+    p.add_argument("--simulate", dest="simulate",
+                   action="store_true",
+                   help="do everything, but don't kill device")
     args = p.parse_args()
 
     # Check if program is run as root, else exit.
@@ -229,10 +255,13 @@ def main():
 
     # Load settings
     cfg = load_settings(SETTINGS_FILE)
+    cfg['simulate'] = args.simulate
 
     log.path = cfg['log_file']
 
     log("Starting with whitelist: " + ",".join(cfg['whitelist']) )
+    if args.simulate:
+        log("WARNING: Simulation mode enabled")
 
     # Start main loop
 
