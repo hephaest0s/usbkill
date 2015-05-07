@@ -31,16 +31,22 @@ SETTINGS_FILE = '/etc/usbkill/settings.ini'
 # Get the current platform
 CURRENT_PLATFORM = platform.system().upper()
 
-help_message = """usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.
-It logs to /var/log/usbkill/
-You can configure a whitelist of usb ids that are acceptable to insert and the remove.
-The usb id can be found by running the command 'lsusb'.
-Settings can be changed in local directory or /etc/usbkill/settings.ini
+help_message = """
+Usbkill is a simple program with one goal:
+  Quickly shutdown the computer when a device is inserted or removed.
 
-In order to be able to shutdown the computer, this program needs to run as root.
+You can configure a whitelist of ids that are acceptable to insert and the remove,
+or a script to check if the screensaver is unlocked.
+
+Usbkill can run without touching system directories (logging to current
+directory), or installed into the system.  See an example settings.ini.
+
+In order to be able to shutdown the computer using buildin method, this
+program needs to run as root. Using external script command you can use
+`sudo command' and drop the root requirement.
 """
 
-def log(msg, lsusb=False):
+def log(msg, lsdev=False):
     line = str(datetime.now()) + ' ' + msg
     print(line)
 
@@ -54,12 +60,11 @@ def log(msg, lsusb=False):
         f.write(line + '\n')
 
         # Log current usb state:
-        if lsusb:
+        if lsdev:
             f.write('Current state:\n')
-    if lsusb:
-        os.system("lsusb >> " + log.path)
+    if lsdev:
+        os.system("(lsusb; echo; lspci) >> " + log.path)
 log.path = None
-
 
 def kill_computer(cfg):
     "Kill computer using buildin or external method"
@@ -73,9 +78,13 @@ def kill_computer(cfg):
         log("Kill script executed...")
         return
 
-    # Buildin method of killing computer
+    # Buildin method of killing the computer
 
-    # Sync the filesystem so that the recent log entry does not get lost.
+    # Sync the filesystem so that the recent log entry does not get
+    # lost.
+    # TODO: The external script might do the trick, but sync
+    # might hang for a longer time sometimes. Suggestion: Execute sync
+    # in parallel thread and wait at most 1 second for it.
     os.system("sync")
 
     # Poweroff computer immediately
@@ -88,11 +97,12 @@ def kill_computer(cfg):
         os.system("shutdown -h now")
     else:
         # Linux-based systems - Will shutdown
-        #os.system("poweroff -f")
-        pass
+        # TODO: I'm not certain if poweroff will clear the keys from RAM.
+        # I'd use cryptsetup luksSuspend in external script.
+        os.system("poweroff -f")
 
-    # Don't enter kill-loop
     log("Buildin kill executed")
+
 
 def is_unlocked(cfg):
     "Check if screen/computer is unlocked"
@@ -104,12 +114,14 @@ def is_unlocked(cfg):
     else:
         return False
 
-def lsusb():
+
+def lsdev():
     "Return a list of connected devices on tracked BUSes"
     import glob
     devices = []
     if CURRENT_PLATFORM == "LINUX":
-        path = '/sys/bus/usb/devices/*/idVendor'
+        # USB
+        path = '/sys/bus/usb*/devices/*/idVendor'
         vendors = glob.glob(path)
         for entry in vendors:
             base = os.path.dirname(entry)
@@ -117,7 +129,19 @@ def lsusb():
             product = open(os.path.join(base, 'idProduct')).read().strip()
             device = vendor + ":" + product
             devices.append(device)
+
+        # PCI / firewire / other
+        # TODO: Can device names collide and should we prefix them somehow?
+        path_lst = [
+            '/sys/bus/pci/devices',
+            '/sys/bus/pci_express/devices',
+            '/sys/bus/firewire/devices',
+            '/sys/bus/pcmcia/devices',
+        ]
+        for path in path_lst:
+            devices += os.listdir(path)
     else:
+        # USB
         df = subprocess.check_output("lsusb", shell=True).decode('utf-8')
         for line in df.split('\n'):
             if line:
@@ -125,6 +149,14 @@ def lsusb():
                 if info:
                     dinfo = info.groupdict()
                     devices.append(dinfo['id'])
+
+        # PCI
+        df = subprocess.check_output("lspci", shell=True).decode('utf-8')
+        for line in df.split('\n'):
+            if line:
+                info = line.split(' ')[0]
+                devices.append(info)
+
     return devices
 
 
@@ -148,39 +180,38 @@ def load_settings(filename):
 
 def loop(cfg):
     "Main loop"
-
     # Main loop that checks every 'sleep_time' seconds if computer should be killed.
     # Allows only whitelisted usb devices to connect!
     # Does not allow usb device that was present during program start to disconnect!
-    known_devices = set(lsusb())
+    known_devices = set(lsdev())
 
     # Write to logs that loop is starting:
-    log("Started patrolling the USB ports every {0} seconds...".format(cfg['sleep_time']),
-        lsusb=True)
+    log("Started patrolling system interfaces every {0} seconds...".format(cfg['sleep_time']),
+        lsdev=True)
 
     # Main loop
     while True:
         # List the current usb devices
-        current_devices = set(lsusb())
+        current_devices = set(lsdev())
         new_devices = current_devices - known_devices
         removed_devices = known_devices - current_devices
 
         # Check that all current devices are in the set of acceptable devices
         for device in new_devices:
             if device in cfg['whitelist']:
-                log("INFO: New whitelisted device connected {0}".format(device), lsusb=True)
+                log("INFO: New whitelisted device connected {0}".format(device), lsdev=True)
                 known_devices.add(device)
                 continue
 
             # New unknown device was connected
             if is_unlocked(cfg):
-                log("INFO: New unknown device {0} connected while unlocked".format(device), lsusb=True)
+                log("INFO: New unknown device {0} connected while unlocked".format(device), lsdev=True)
                 known_devices.add(device)
                 continue
 
             # New unknown device connected while not unlocked.
             log("WARNING: New not-whitelisted device {0} detected - killing the computer...".format(device),
-                lsusb=True)
+                lsdev=True)
             kill_computer(cfg)
             known_devices.add(device)
 
@@ -205,6 +236,7 @@ def loop(cfg):
 
         sleep(cfg['sleep_time'])
 
+
 def exit_handler(signum, frame):
     log("Exiting because exit signal was received")
     sys.exit(0)
@@ -226,6 +258,7 @@ def test(cfg):
     os.system('sync')
     kill_computer(cfg)
 
+
 def main():
     "Check arguments and run program"
     import argparse
@@ -244,11 +277,6 @@ def main():
                    help="do everything, but don't kill device")
     args = p.parse_args()
 
-    # Check if program is run as root, else exit.
-    # Root is needed to power off the computer.
-    if not os.geteuid() == 0:
-        sys.exit("\nThis program needs to run as root.\n")
-
     # Register handlers for clean exit of loop
     for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT]:
         signal.signal(sig, exit_handler)
@@ -263,8 +291,13 @@ def main():
     if args.simulate:
         log("WARNING: Simulation mode enabled")
 
-    # Start main loop
+    # Check if program is run as root, else exit.
+    # Root is needed to power off the computer.
+    if args.simulate is False and not cfg['kill_cmd'] and os.geteuid() != 0:
+        print("\nThis program needs to run as root to use the buildin kill method.\n")
+        sys.exit(1)
 
+    # Start the main loop
     if args.test:
         test(cfg)
     else:
