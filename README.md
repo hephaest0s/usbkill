@@ -34,14 +34,6 @@ There are 3 reasons (maybe more?) to use this tool:
 
 and more to come! Custom commands for when a USB change is observed will be implemented.
 
-### Additional requirement for OS X users
-
-In order to make usbkill work on OS X, you have to install *python3* by using [brew](http://brew.sh):
-
-```shell
-brew update && brew install python3
-```
-
 ### Contact
 
 [hephaestos@riseup.net](mailto:hephaestos@riseup.net) - PGP/GPG Fingerprint: 8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B
