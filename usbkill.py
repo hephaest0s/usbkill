@@ -202,6 +202,10 @@ if __name__=="__main__":
 	elif len(args) > 0:
 		sys.exit("\nArgument not understood. Can only understand -h\n")
 		
+	
+	# CBA Warning
+	print("[WARNING] usbkill does not protect efficiently from a Cold-Boot Attack, if you are concerned by this kind of attack, we can only recommend you to use an operating system like Tails to be protected")
+	
 	# Check if program is run as root, else exit.
 	# Root is needed to power off the computer.
 	if not os.geteuid() == 0:
@@ -211,21 +215,20 @@ if __name__=="__main__":
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		if subprocess.check_output("fdesetup isactive", shell=True).strip() != "true":
 			print("[WARNING] FileVault is disabled! This mean attackers can bypass usbkill easily!")
-	
+
 	# Make sure there is a logging folder
 	if not os.path.isdir("/var/log/usbkill/"):
 		os.mkdir("/var/log/usbkill/")
-	
+
 	# Make sure settings file is available
 	settings_template(SETTINGS_FILE)
 
 	# Register handlers for clean exit of loop
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
 		signal.signal(sig, exit_handler)
-		
+
 	# Load settings
 	whitelisted_devices, sleep_time = load_settings(SETTINGS_FILE)
-	
+
 	# Start main loop
 	loop(whitelisted_devices, sleep_time)
-	
