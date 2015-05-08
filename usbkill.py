@@ -209,7 +209,7 @@ if __name__=="__main__":
 		
 	# Warn the user if he does not have FileVault
 	if CURRENT_PLATFORM.startswith("DARWIN"):
-		if subprocess.check_output("fdesetup status", shell=True).strip() != "FileVault is On.":
+		if subprocess.check_output("fdesetup isactive", shell=True).strip() != "true":
 			print("[WARNING] FileVault is disabled! This mean attackers can bypass usbkill easily!")
 	
 	# Make sure there is a logging folder
