@@ -74,9 +74,14 @@ def lsusb():
 	
 	# A Python version of the command 'lsusb' that returns a list of connected usbids
 	if CURRENT_PLATFORM.startswith("DARWIN"):
-	
+		
 		# Use OS X system_profiler (native and 60% faster than lsusb port)
-		df = plistlib.loads(subprocess.check_output("system_profiler SPUSBDataType -xml -detailLevel mini", shell=True))
+		df = subprocess.check_output("system_profiler SPUSBDataType -xml -detailLevel mini", shell=True)
+		if sys.version_info[0] == 2:
+			df = plistlib.readPlistFromString(df)
+		elif sys.version_info[0] == 3:
+			df = plistlib.loads(df)
+		
 		devices = []
 		
 		def check_inside(result):
