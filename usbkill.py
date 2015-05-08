@@ -202,6 +202,14 @@ if __name__=="__main__":
 	elif len(args) > 0:
 		sys.exit("\nArgument not understood. Can only understand -h\n")
 		
+
+	# Splash
+	print("             _     _     _ _ _  ")
+	print("            | |   | |   (_) | | ")
+	print("  _   _  ___| |__ | |  _ _| | | ")
+	print(" | | | |/___)  _ \| |_/ ) | | | ")
+	print(" | |_| |___ | |_) )  _ (| | | | ")
+	print(" |____/(___/|____/|_| \_)_|\_)_)\n")
 	
 	# CBA Warning
 	print("[WARNING] usbkill does not protect efficiently from a Cold-Boot Attack, if you are concerned by this kind of attack, we can only recommend you to use an operating system like Tails to be protected")
