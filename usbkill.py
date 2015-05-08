@@ -194,6 +194,7 @@ def exit_handler(signum, frame):
 	sys.exit(0)
 
 if __name__=="__main__":
+
 	# Check arguments
 	args = sys.argv[1:]
 	if '-h' in args or '--help' in args:
@@ -205,6 +206,11 @@ if __name__=="__main__":
 	# Root is needed to power off the computer.
 	if not os.geteuid() == 0:
 		sys.exit("\nThis program needs to run as root.\n")
+		
+	# Warn the user if he does not have FileVault
+	if CURRENT_PLATFORM.startswith("DARWIN"):
+		if subprocess.check_output("fdesetup status", shell=True).strip() != "FileVault is On.":
+			print("[WARNING] FileVault is disabled! This mean attackers can bypass usbkill easily!")
 	
 	# Make sure there is a logging folder
 	if not os.path.isdir("/var/log/usbkill/"):
