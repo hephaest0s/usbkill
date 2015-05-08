@@ -166,7 +166,7 @@ def loop(whitelisted_devices, sleep_time):
 	acceptable_devices = set(start_devices + whitelisted_devices)
 	
 	# Write to logs that loop is starting:
-	msg = "Started patrolling the USB ports every " + str(sleep_time) + " seconds..."
+	msg = "[INFO] Started patrolling the USB ports every " + str(sleep_time) + " seconds..."
 	log(msg)
 	print(msg)
 	
@@ -189,8 +189,8 @@ def loop(whitelisted_devices, sleep_time):
 		sleep(sleep_time)
 
 def exit_handler(signum, frame):
-	print("\nExiting because exit signal was received\n")
-	log("Exiting because exit signal was received")
+	print("\n[INFO] Exiting because exit signal was received\n")
+	log("[INFO] Exiting because exit signal was received")
 	sys.exit(0)
 
 if __name__=="__main__":
@@ -200,8 +200,7 @@ if __name__=="__main__":
 	if '-h' in args or '--help' in args:
 		sys.exit(help_message)
 	elif len(args) > 0:
-		sys.exit("\nArgument not understood. Can only understand -h\n")
-		
+		sys.exit("\n[ERROR] Argument not understood. Can only understand -h\n")
 
 	# Splash
 	print("             _     _     _ _ _  ")
@@ -217,8 +216,8 @@ if __name__=="__main__":
 	# Check if program is run as root, else exit.
 	# Root is needed to power off the computer.
 	if not os.geteuid() == 0:
-		sys.exit("\nThis program needs to run as root.\n")
-		
+		sys.exit("\n[ERROR] This program needs to run as root.\n")
+
 	# Warn the user if he does not have FileVault
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		if subprocess.check_output("fdesetup isactive", shell=True).strip() != "true":
