@@ -7,7 +7,7 @@
 To run:
 
 ```shell
-sudo python3 usbkill.py
+sudo python usbkill.py
 ```
 
 ### Why?
