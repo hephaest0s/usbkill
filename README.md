@@ -15,10 +15,10 @@ sudo python usbkill.py
 There are 3 reasons (maybe more?) to use this tool:
 
 - In case the police or other thugs come busting in (or steal your laptop from you when you are at a public library as happened to Ross). The police commonly uses a « [mouse jiggler](http://www.amazon.com/Cru-dataport-Jiggler-Automatic-keyboard-Activity/dp/B00MTZY7Y4/ref=pd_bxgy_pc_text_y/190-3944818-7671348) » to keep the screensaver and sleep mode from activating.
-- You don't want someone to install backdoors or malware on your computer or to retrieve documents from your computer via USB.
+- You don't want someone retrieve documents from your computer via USB or install malware or backdoors.
 - You want to improve the security of your (Full Disk Encrypted) home or corporate server (e.g. Your Raspberry).
 
-> **[!] Important**: Make sure to use full disk encryption! Otherwise they will get in anyway.
+> **[!] Important**: Make sure to use (partial) disk encryption ! Otherwise they will get in anyway.
 
 > **Tip**: Additionally, you may use a cord to attach a USB key to your wrist. Then insert the key into your computer and start usbkill. If they steal your computer, the USB will be removed and the computer shuts down immediately.
 
@@ -26,13 +26,14 @@ There are 3 reasons (maybe more?) to use this tool:
 
 - Compability with Linux, *BSD and OS X
 - Shutdown the computer when there is USB activity
-- Ability to whitelist an USB device
-- Ability to change the check interval (default: 0.5)
+- Customizable. Define which commands should be executed just before shut down.
+- Ability to whitelist a USB device
+- Ability to change the check interval (default: 0.25)
 - Work perfectly in sleep mode (OS X)
 - Low memory consumption
-- No dependency except Python
+- No dependency except Python2/3
 
-and more to come! Custom commands for when a USB change is observed will be implemented.
+and more to come! including monitoring of other ports.
 
 ### Contact
 
