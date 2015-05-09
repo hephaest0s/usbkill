@@ -46,8 +46,8 @@ DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})")
 SETTINGS_FILE = '/etc/usbkill/settings.ini'
 
 help_message = """
-usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.
-It logs to /var/log/usbkill/kills.log
+usbkill is a simple program with one goal: quickly shutdown the computer when a USB is inserted or removed.
+Events are logged in /var/log/usbkill/kills.log
 You can configure a whitelist of USB ids that are acceptable to insert and the remove.
 The USB id can be found by running the command 'lsusb'.
 Settings can be changed in /etc/usbkill/settings
@@ -128,7 +128,6 @@ def lsusb():
 					assert "vendor_id" in result and "product_id" in result
 					# Append to the list of devices
 					devices.append(DEVICE_RE[1].findall(result["vendor_id"])[0] + ':' + DEVICE_RE[1].findall(result["product_id"])[0])
-					# debug: devices.append(result["vendor_id"] + ':' + result["product_id"])
 				except AssertionError: {}
 			
 			# Check if there is items inside
