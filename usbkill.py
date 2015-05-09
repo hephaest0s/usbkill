@@ -41,7 +41,15 @@ DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})")
 # Set the settings filename here
 SETTINGS_FILE = '/etc/usbkill/settings';
 
-help_message = "usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.\nIt logs to /var/log/usbkill/kills.log\nYou can configure a whitelist of USB ids that are acceptable to insert and the remove.\nThe USB id can be found by running the command 'lsusb'.\nSettings can be changed in /etc/usbkill/settings\n\nIn order to be able to shutdown the computer, this program needs to run as root.\n"
+
+help_message = """
+usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.
+It logs to /var/log/usbkill/kills.log
+You can configure a whitelist of USB ids that are acceptable to insert and the remove.
+The USB id can be found by running the command 'lsusb'.
+Settings can be changed in /etc/usbkill/settings
+In order to be able to shutdown the computer, this program needs to run as root.
+"""
 
 def log(msg):
 	logfile = "/var/log/usbkill/usbkill.log"
