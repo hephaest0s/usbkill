@@ -250,9 +250,7 @@ def load_settings(filename):
 		configparser: Compatibility layer for Python 2/3
 		"""
 		if sys.version_info[0] == 3: # Python 3
-		
-			print(config['config'])
-			
+					
 			section = config['config']
 			
 			if gtype == '':
