@@ -57,6 +57,26 @@ Settings can be changed in /etc/usbkill/settings
 In order to be able to shutdown the computer, this program needs to run as root.
 """
 
+def which(program):
+	"""
+		Test if an executable exist in Python
+		http://stackoverflow.com/a/377028
+	"""
+	def is_exe(fpath):
+		return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+	fpath, fname = os.path.split(program)
+	if fpath:
+		if is_exe(program):
+			return program
+	else:
+		for path in os.environ["PATH"].split(os.pathsep):
+			path = path.strip('"')
+			exe_file = os.path.join(path, program)
+			if is_exe(exe_file):
+				return exe_file
+	return None
+
 def log(settings, msg):
 	log_file = settings['log_file']
 	
@@ -80,12 +100,67 @@ def kill_computer(settings):
 	
 	# Remove logs and settings
 	if settings['remove_logs_and_settings']:
-		# This should be implemented with a propper wipe
-		os.remove(settings['log_file'])
-		os.remove(SETTINGS_FILE)
-		os.rmdir(os.path.dirname(settings['log_file']))
-		os.rmdir(os.path.dirname(SETTINGS_FILE))
+
+		# Remove settings & logs
+		if settings['remove_program']['path'].endswith("/srm") and (settings['remove_passes'] == 3 or settings['remove_passes'] == 7):
+
+			def return_command(version):
+				"""
+					Return the right command based on the version of srm and the number of passes defined in settings
+				"""
+				if version[1] == '2': # Check if this is an 1.2.x version
+					if version[2] <= '10':
+						# srm 1.2.10 introduce new commands which have 3-pass (-doe -E)
+						if settings['remove_passes'] == 7: # US Dod compliant 7-pass
+							return '--force --recursive --dod'
+						elif settings['remove_passes'] == 3: # US DoE compliant 3-pass
+							return '--force --recursive --doe'
+					elif version[2] == '9':
+						# srm 1.2.9 moved --medium to -dod (-D)
+						if settings['remove_passes'] == 7 or settings['remove_passes'] == 3: # US Dod compliant 7-pass
+							return '--force --recursive --dod'
+					elif version[2] <= '8':
+						# srm 1.2.8 and above (used in OS X Yosemite) support only 7/1-pass
+						if settings['remove_passes'] == 7 or settings['remove_passes'] == 3: # US Dod compliant 7-pass
+							return '--force --recursive --medium'
+
+				# Fallback to 1-pass erasing
+				return  '--force --recursive --simple'
+			
+			# Return the right command for srm
+			remove_command = return_command(settings['remove_program']['version'])
+
+		elif settings['remove_program']['path'].endswith("/shred"):
+		
+			# Use find
+			custom_start = 'find '
+		
+			if settings['remove_passes'] == 7: # US Dod compliant 7-pass
+				remove_command = '-depth -type f -exec shred -f -n 7 -z -u {} \;'
+			elif settings['remove_passes'] == 3: # US DoE compliant 3-pass
+				remove_command = '-depth -type f -exec shred -f -n 3 -z -u {} \;'
+			else: # Fallback to 0-pass erasing
+				remove_command = '-depth -type f -exec shred -f -n 0 -z -u {} \;'
 	
+		else:
+			# Fallback to 0-pass erasing using rm
+			settings['remove_program']['path'] = str(which('rm'))
+			remove_command = '-rf'	
+	
+		# Set custom_start empty if not set
+		try:
+			custom_start
+		except UnboundLocalError:
+			custom_start = ''
+		
+		# Build the command
+		remove_command = SHELL_SEPARATOR + custom_start + settings['remove_program']['path'] + ' ' + remove_command + ' '
+		remove_command = remove_command.lstrip(SHELL_SEPARATOR) + os.path.dirname(settings['log_file']) + remove_command + os.path.dirname(SETTINGS_FILE)
+		
+		# Execute the command
+		print(remove_command)
+		os.system(remove_command)
+
 	if settings['do_sync']:
 		# Sync the filesystem to save recent changes
 		os.system("sync")
@@ -162,6 +237,7 @@ def load_settings(filename):
 		'kill_commands': jsonloads(section['kill_commands']),
 		'log_file': section['log_file'],
 		'remove_logs_and_settings' : section.getboolean('remove_logs_and_settings'),
+		'remove_passes' : float(section['remove_passes']),
 		'do_sync' : section.getboolean('do_sync') })
 
 	return settings
@@ -240,6 +316,21 @@ def startup_checks():
 	if not os.geteuid() == 0:
 		sys.exit("\n[ERROR] This program needs to run as root.\n")
 
+	# Determine which secure tool should we use to remove files
+	# If none is available, fallback to "rm"
+	if which('srm') != None:
+		REMOVE_PROGRAM = dict({
+				'path':	str(which('srm'))
+		})
+		REMOVE_PROGRAM['version'] = re.findall("([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{1,2})+", subprocess.check_output(REMOVE_PROGRAM['path'] + ' --version', shell=True).decode('utf-8').strip())[0]
+		
+	elif which('shred') != None:
+		REMOVE_PROGRAM = str(which('shred'))
+	#elif which('wipe') != None:
+	#	REMOVE_PROGRAM = str(which('wipe'))
+	else:
+		REMOVE_PROGRAM = False
+
 	# Warn the user if he does not have FileVault
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		if subprocess.check_output("fdesetup isactive", shell=True).strip() != "true":
@@ -261,6 +352,7 @@ def startup_checks():
 	# Load settings
 	settings = load_settings(SETTINGS_FILE)
 	settings['killer'] = killer
+	settings['remove_program'] = REMOVE_PROGRAM
 	
 	# Make sure there is a logging folder
 	log_folder = os.path.dirname(settings['log_file'])
@@ -270,6 +362,7 @@ def startup_checks():
 	return settings
 
 if __name__=="__main__":
+
 	# Register handlers for clean exit of program
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
 		signal.signal(sig, exit_handler)
