@@ -64,7 +64,7 @@ In order to be able to shutdown the computer, this program needs to run as root.
 def which(program):
 	"""
 		Test if an executable exist in Python
-		http://stackoverflow.com/a/377028
+		-> http://stackoverflow.com/a/377028
 	"""
 	def is_exe(fpath):
 		return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
