@@ -29,7 +29,11 @@ import os, sys, signal
 from time import sleep
 from datetime import datetime
 
-import configparser
+if sys.version_info[0] == 3:
+	import configparser
+else:
+	import ConfigParser
+
 from json import loads as jsonloads
 
 # Shell separator
@@ -232,18 +236,55 @@ def lsusb():
 		return DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
 
 def load_settings(filename):
+	
+	if sys.version_info[0] == 3:
+		config = configparser.ConfigParser()
+	else:
+		config = ConfigParser.ConfigParser()
+	
 	# Read all lines of settings file
-	config = configparser.ConfigParser()
 	config.read(filename)
-	section = config['config']
+	
+	def get_arg(config, name, gtype=''):
+		"""
+		configparser: Compatibility layer for Python 2/3
+		"""
+		if sys.version_info[0] == 3: # Python 3
+		
+			print(config['config'])
+			
+			section = config['config']
+			
+			if gtype == '':
+				return section[name]
+			elif gtype == 'FLOAT':
+				return section.getfloat(name)
+			elif gtype == 'INT':
+				return section.getint(name)
+			elif gtype == 'BOOL':
+				return section.getboolean(name)
+				
+		else: # Python 2
+		
+			if gtype == '':
+				return config.get('config', name)
+			elif gtype == 'FLOAT':
+				return config.getfloat('config', name)
+			elif gtype == 'INT':
+				return config.getint('config', name)
+			elif gtype == 'BOOL':
+				return config.getboolean('config', name)
+			
+	# Build settings
 	settings = dict({
-		'sleep_time' : float(section['sleep']),
-		'whitelist': jsonloads(section['whitelist']),
-		'kill_commands': jsonloads(section['kill_commands']),
-		'log_file': section['log_file'],
-		'remove_logs_and_settings' : section.getboolean('remove_logs_and_settings'),
-		'remove_passes' : float(section['remove_passes']),
-		'do_sync' : section.getboolean('do_sync') })
+		'sleep_time' : get_arg(config, 'sleep', 'FLOAT'),
+		'whitelist': jsonloads(get_arg(config, 'whitelist')),
+		'kill_commands': jsonloads(get_arg(config, 'kill_commands')),
+		'log_file': get_arg(config, 'log_file'),
+		'remove_logs_and_settings' : get_arg(config, 'remove_logs_and_settings', 'BOOL'),
+		'remove_passes' : get_arg(config, 'remove_passes', 'INT'),
+		'do_sync' : get_arg(config, 'do_sync', 'BOOL')
+	})
 
 	return settings
 	
