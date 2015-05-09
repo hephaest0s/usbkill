@@ -413,8 +413,9 @@ def startup_checks():
 	# Configuration File Manager
 	# The following does:
 	# 1 if no settings in /etc/, then copy settings to /etc/ and remove setting.ini in current folder
-	# 2 if you are dev (--dev), then always copy settings.ini to /etc/ and keep settings.ini in current folder
-	if not os.path.isfile(SETTINGS_FILE) or dev:
+	# Nonsense because running one time without --dev will bug the --dev mode as the non-dev mode remove the setting.ini file:
+	#     -> 2 if you are dev (--dev), then always copy settings.ini to /etc/ and keep settings.ini in current folder
+	if not os.path.isfile(SETTINGS_FILE):
 		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 		if not os.path.isfile(sources_path + "settings.ini"):
 			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the settings.ini and place it in /etc/usbkill/ or in " + sources_path + "/\n")
