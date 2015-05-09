@@ -352,7 +352,7 @@ def startup_checks():
 
 	# Warn the user if he does not have FileVault
 	if CURRENT_PLATFORM.startswith("DARWIN"):
-		if subprocess.check_output("/usr/bin/fdesetup isactive", shell=True).strip() != "true":
+		if subprocess.check_output("/usr/bin/fdesetup isactive", shell=True).decode('utf-8').strip() != "true":
 			print("[NOTICE] FileVault is disabled. Sensitive data SHOULD be encrypted.")
 
 	if not os.path.isdir("/etc/usbkill/"):
