@@ -286,8 +286,8 @@ def load_settings(filename):
 	# Build settings
 	settings = dict({
 		'sleep_time' : get_arg('sleep', 'FLOAT'),
-		'whitelist': jsonloads(get_arg('whitelist')),
-		'kill_commands': jsonloads(get_arg('kill_commands')),
+		'whitelist': jsonloads(get_arg('whitelist').strip()),
+		'kill_commands': jsonloads(get_arg('kill_commands').strip()),
 		'log_file': get_arg('log_file'),
 		'remove_logs_and_settings' : get_arg('remove_logs_and_settings', 'BOOL'),
 		'remove_passes' : get_arg('remove_passes', 'INT'),
