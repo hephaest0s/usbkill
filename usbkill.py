@@ -151,9 +151,9 @@ def kill_computer(settings):
 			# wipe support
 			elif settings['remove_program']['path'].endswith("/wipe"):
 				
-				if settings['remove_passes'] == 7: # US Dod compliant 7-pass
+				if settings['remove_passes'] == 7: # Probably not US Dod compliant 7-pass
 					remove_command = '-frsc -Q 7'
-				elif settings['remove_passes'] == 3: # US DoE compliant 3-pass
+				elif settings['remove_passes'] == 3: # Probably not US DoE compliant 3-pass
 					remove_command = '-frsc -Q 3'
 				else: # Fallback to 0-pass erasing
 					remove_command = '-frsc -Q 0'
