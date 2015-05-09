@@ -161,8 +161,8 @@ def load_settings(filename):
 		if line[:6] == "sleep ":
 			sleep_time = float(line.replace("\n","").replace("  "," ").split(" ").pop())
 
-	assert not None in [devices, sleep_time], "Please set the 'sleep' and 'whitelist' parameters in '/etc/usbkill/settings' !"
-	assert sleep_time > 0.0, "Please allow for positive non-zero 'sleep' delay between USB checks!"
+	assert not None in [devices, sleep_time], "[ERROR] Please set the 'sleep' and 'whitelist' parameters in '/etc/usbkill/settings'!"
+	assert sleep_time > 0.0, "[ERROR] Please allow for positive non-zero 'sleep' delay between USB checks!"
 	return devices, sleep_time
 	
 def loop(whitelisted_devices, sleep_time, killer):
