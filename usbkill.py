@@ -412,15 +412,17 @@ def startup_checks():
 	if not os.path.isdir("/etc/usbkill/"):
 		os.mkdir("/etc/usbkill/")
 
+	# Configuration File Manager
 	# The following does:
 	# 1 if no settings in /etc/, then copy settings to /etc/ and remove setting.ini in current folder
 	# 2 if you are dev (--dev), then always copy settings.ini to /etc/ and keep settings.ini in current folder
 	if not os.path.isfile(SETTINGS_FILE) or dev:
-		if not os.path.isfile("settings.ini"):
-			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the settings.ini and place it in /etc/usbkill/ or in " + os.getcwd() + "/\n")
-		os.system("cp settings.ini " + SETTINGS_FILE)
+		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
+		if not os.path.isfile(sources_path + "settings.ini"):
+			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the settings.ini and place it in /etc/usbkill/ or in " + sources_path + "/\n")
+		os.system("cp " + sources_path + "settings.ini " + SETTINGS_FILE)
 		if not dev:
-			os.remove("settings.ini") 
+			os.remove(sources_path + "settings.ini") 
 		
 	# Load settings
 	settings = load_settings(SETTINGS_FILE)
