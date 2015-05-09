@@ -230,7 +230,7 @@ def lsusb():
 		return DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
 
 def load_settings(filename):
-	# read all lines of settings file
+	# Read all lines of settings file
 	config = configparser.ConfigParser()
 	config.read(filename)
 	section = config['config']
