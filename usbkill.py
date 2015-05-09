@@ -245,7 +245,7 @@ def load_settings(filename):
 	# Read all lines of settings file
 	config.read(filename)
 	
-	def get_arg(config, name, gtype=''):
+	def get_arg(name, gtype=''):
 		"""
 		configparser: Compatibility layer for Python 2/3
 		"""
@@ -275,13 +275,13 @@ def load_settings(filename):
 			
 	# Build settings
 	settings = dict({
-		'sleep_time' : get_arg(config, 'sleep', 'FLOAT'),
-		'whitelist': jsonloads(get_arg(config, 'whitelist')),
-		'kill_commands': jsonloads(get_arg(config, 'kill_commands')),
-		'log_file': get_arg(config, 'log_file'),
-		'remove_logs_and_settings' : get_arg(config, 'remove_logs_and_settings', 'BOOL'),
-		'remove_passes' : get_arg(config, 'remove_passes', 'INT'),
-		'do_sync' : get_arg(config, 'do_sync', 'BOOL')
+		'sleep_time' : get_arg('sleep', 'FLOAT'),
+		'whitelist': jsonloads(get_arg('whitelist')),
+		'kill_commands': jsonloads(get_arg('kill_commands')),
+		'log_file': get_arg('log_file'),
+		'remove_logs_and_settings' : get_arg('remove_logs_and_settings', 'BOOL'),
+		'remove_passes' : get_arg('remove_passes', 'INT'),
+		'do_sync' : get_arg('do_sync', 'BOOL')
 	})
 
 	return settings
