@@ -108,7 +108,7 @@ def lsusb():
 					# Append to the list of devices
 					devices.append(DEVICE_RE[1].findall(result["vendor_id"])[0] + ':' + DEVICE_RE[1].findall(result["product_id"])[0])
 					# debug: devices.append(result["vendor_id"] + ':' + result["product_id"])
-				except KeyError: {}
+				except AssertionError: {}
 			
 			# Check if there is items inside
 			try:
