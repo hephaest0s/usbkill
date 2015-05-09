@@ -24,14 +24,14 @@ There are 3 reasons (maybe more?) to use this tool:
 
 ### Feature List
 
-- Compability with Linux, *BSD and OS X
+- Compatible with Linux, *BSD and OS X
 - Shutdown the computer when there is USB activity
 - Customizable. Define which commands should be executed just before shut down.
 - Ability to whitelist a USB device
-- Ability to change the check interval (default: 0.25)
+- Ability to change the check interval (default: 25ms)
 - Work perfectly in sleep mode (OS X)
 - Low memory consumption
-- No dependency except Python2/3
+- No dependency except Python 2/3
 
 and more to come! including monitoring of other ports.
 
