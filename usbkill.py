@@ -261,8 +261,7 @@ def startup_checks():
 	settings['killer'] = killer
 	
 	# Make sure there is a logging folder
-	log_folder = settings['log_file'].split("/")[:-1]
-	log_folder = "".join([x + "/" for x in log_folder])[:-1]
+	log_folder = os.path.dirname(settings['log_file'])
 	if not os.path.isdir(log_folder):
 		os.mkdir(log_folder)
 	
