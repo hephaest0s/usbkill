@@ -1,4 +1,4 @@
-![usbkill](Resources/USBKillBanner.jpg)
+![usbkill](Resources/USBKillBanner.gif)
 
 « usbkill » is an anti-forensic kill-switch that waits for a change on your USB ports and then immediately shuts down your computer.
 
@@ -7,7 +7,7 @@
 To run:
 
 ```shell
-sudo python3 usbkill.py
+sudo python usbkill.py
 ```
 
 ### Why?
@@ -33,14 +33,6 @@ There are 3 reasons (maybe more?) to use this tool:
 - No dependency except Python
 
 and more to come! Custom commands for when a USB change is observed will be implemented.
-
-### Additional requirement for OS X users
-
-In order to make usbkill work on OS X, you have to install *python3* by using [brew](http://brew.sh):
-
-```shell
-brew update && brew install python3
-```
 
 ### Contact
 

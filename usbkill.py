@@ -25,11 +25,12 @@
 import re
 import subprocess
 import platform
+import plistlib
 import os, sys, signal
 from time import time, sleep
 
 # We compile this function beforehand for efficiency.
-DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile(".+Product\sID:\s0x(\w+)\n.+Vendor\sID:\s0x(\w+)") ]
+DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})") ]
 
 # Set the settings filename here
 SETTINGS_FILE = '/etc/usbkill/settings';
@@ -61,7 +62,7 @@ def kill_computer():
 	# Poweroff computer immediately
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		# OS X (Darwin) - Will halt ungracefully, without signaling apps
-		os.system("killall loginwindow Finder && halt -q")
+		os.system("killall Finder && killall loginwindow && halt -q")
 	elif CURRENT_PLATFORM.endswith("BSD"):
 		# BSD-based systems - Will shutdown
 		os.system("shutdown -h now")
@@ -70,13 +71,51 @@ def kill_computer():
 		os.system("poweroff -f")
 
 def lsusb():
-	# A python version of the command 'lsusb' that returns a list of connected usbids
+	
+	# A Python version of the command 'lsusb' that returns a list of connected usbids
 	if CURRENT_PLATFORM.startswith("DARWIN"):
+		
 		# Use OS X system_profiler (native and 60% faster than lsusb port)
-		df = DEVICE_RE[1].findall(subprocess.check_output("system_profiler SPUSBDataType", shell=True).decode('utf-8').strip())
+		df = subprocess.check_output("system_profiler SPUSBDataType -xml -detailLevel mini", shell=True)
+		if sys.version_info[0] == 2:
+			df = plistlib.readPlistFromString(df)
+		elif sys.version_info[0] == 3:
+			df = plistlib.loads(df)
+		
 		devices = []
-		for usb in df:
-			devices.append(usb[1] + ':' + usb[0])
+		
+		def check_inside(result):
+			
+			# Do not take devices with Built-in_Device=Yes
+			try:
+				result["Built-in_Device"]
+			except KeyError:
+			
+				# Check if vendor_id/product_id is available for this one
+				try:
+					result["vendor_id"]
+					result["product_id"]
+				
+					# Append to the list of devices
+					devices.append(DEVICE_RE[1].findall(result["vendor_id"])[0] + ':' + DEVICE_RE[1].findall(result["product_id"])[0])
+					# debug: devices.append(result["vendor_id"] + ':' + result["product_id"])
+				except KeyError: {}
+			
+			# Check if there is items inside
+			try:				
+				result["_items"]
+				
+				# Looks like, do the while again
+				for result_deep in result["_items"]:
+					# Check what's inside the _items array
+					check_inside(result_deep)
+						
+			except KeyError: {}
+
+		# Run the loop
+		for result in df[0]["_items"]:
+			check_inside(result)
+		
 		return devices
 	else:
 		# Use lsusb on linux and bsd
@@ -127,7 +166,7 @@ def loop(whitelisted_devices, sleep_time):
 	acceptable_devices = set(start_devices + whitelisted_devices)
 	
 	# Write to logs that loop is starting:
-	msg = "Started patrolling the USB ports every " + str(sleep_time) + " seconds..."
+	msg = "[INFO] Started patrolling the USB ports every " + str(sleep_time) + " seconds..."
 	log(msg)
 	print(msg)
 	
@@ -140,46 +179,63 @@ def loop(whitelisted_devices, sleep_time):
 		for device in current_devices:
 			if device not in acceptable_devices:
 				kill_computer()
-				
+
 		# Check that all start devices are still present in current devices
 		for device in start_devices:
-			if device not in current_devices:
+			# Practically prevent multiple devices with the same Vendor/Product ID to be connected
+			if current_devices.count(device) != 1:
 				kill_computer()
 				
 		sleep(sleep_time)
 
 def exit_handler(signum, frame):
-	print("\nExiting because exit signal was received\n")
-	log("Exiting because exit signal was received")
+	print("\n[INFO] Exiting because exit signal was received\n")
+	log("[INFO] Exiting because exit signal was received")
 	sys.exit(0)
 
 if __name__=="__main__":
+
 	# Check arguments
 	args = sys.argv[1:]
 	if '-h' in args or '--help' in args:
 		sys.exit(help_message)
 	elif len(args) > 0:
-		sys.exit("\nArgument not understood. Can only understand -h\n")
-		
+		sys.exit("\n[ERROR] Argument not understood. Can only understand -h\n")
+
+	# Splash
+	print("             _     _     _ _ _  \n" +
+	      "            | |   | |   (_) | | \n" +
+	      "  _   _  ___| |__ | |  _ _| | | \n" +
+	      " | | | |/___)  _ \| |_/ ) | | | \n" +
+	      " | |_| |___ | |_) )  _ (| | | | \n" +
+         " |____/(___/|____/|_| \_)_|\_)_)\n")
+	
+	# CBA Warning
+	print("[WARNING] usbkill does not protect efficiently from a Cold-Boot Attack, if you are concerned by this kind of attack, we can only recommend you to use an operating system like Tails to be protected")
+	
 	# Check if program is run as root, else exit.
 	# Root is needed to power off the computer.
 	if not os.geteuid() == 0:
-		sys.exit("\nThis program needs to run as root.\n")
-	
+		sys.exit("\n[ERROR] This program needs to run as root.\n")
+
+	# Warn the user if he does not have FileVault
+	if CURRENT_PLATFORM.startswith("DARWIN"):
+		if subprocess.check_output("fdesetup isactive", shell=True).strip() != "true":
+			print("[WARNING] FileVault is disabled! This mean attackers can bypass usbkill easily!")
+
 	# Make sure there is a logging folder
 	if not os.path.isdir("/var/log/usbkill/"):
 		os.mkdir("/var/log/usbkill/")
-	
+
 	# Make sure settings file is available
 	settings_template(SETTINGS_FILE)
 
 	# Register handlers for clean exit of loop
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
 		signal.signal(sig, exit_handler)
-		
+
 	# Load settings
 	whitelisted_devices, sleep_time = load_settings(SETTINGS_FILE)
-	
+
 	# Start main loop
 	loop(whitelisted_devices, sleep_time)
-	
