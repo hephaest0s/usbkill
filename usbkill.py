@@ -1,8 +1,8 @@
-#             _     _     _ _ _  
-#            | |   | |   (_) | | 
-#  _   _  ___| |__ | |  _ _| | | 
-# | | | |/___)  _ \| |_/ ) | | | 
-# | |_| |___ | |_) )  _ (| | | | 
+#             _     _     _ _ _ 
+#            | |   | |   (_) | |
+#  _   _  ___| |__ | |  _ _| | |
+# | | | |/___)  _ \| |_/ ) | | |
+# | |_| |___ | |_) )  _ (| | | |
 # |____/(___/|____/|_| \_)_|\_)_)
 #
 #
@@ -206,11 +206,11 @@ def exit_handler(signum, frame):
 def startup_checks():
 	# Splash
 	print("             _     _     _ _ _  \n" +
-	      "            | |   | |   (_) | | \n" +
-	      "  _   _  ___| |__ | |  _ _| | | \n" +
-	      " | | | |/___)  _ \| |_/ ) | | | \n" +
-	      " | |_| |___ | |_) )  _ (| | | | \n" +
-         " |____/(___/|____/|_| \_)_|\_)_)\n")
+			"            | |   | |   (_) | | \n" +
+			"  _   _  ___| |__ | |  _ _| | | \n" +
+			" | | | |/___)  _ \| |_/ ) | | | \n" +
+			" | |_| |___ | |_) )  _ (| | | | \n" +
+			" |____/(___/|____/|_| \_)_|\_)_)\n")
 
 	# Check arguments
 	args = sys.argv[1:]
@@ -267,14 +267,13 @@ def startup_checks():
 	return settings
 
 if __name__=="__main__":
+
 	# Register handlers for clean exit of program
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
 		signal.signal(sig, exit_handler)
 	
-	# Run startup checks and load settings:
+	# Run startup checks and load settings
 	settings = startup_checks()
 
 	# Start main loop
 	loop(settings)
-
-	
