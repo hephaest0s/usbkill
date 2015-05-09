@@ -108,8 +108,8 @@ def kill_computer(settings):
 		# Continue only if a shredder is available
 		if settings['remove_program']['path'] != None:
 		
-			# Remove settings & logs
-			if settings['remove_program']['path'].endswith("/srm") and (settings['remove_passes'] == 3 or settings['remove_passes'] == 7):
+			# srm support
+			if settings['remove_program']['path'].endswith("/srm"):
 	
 				def return_command(version):
 					"""
@@ -136,7 +136,8 @@ def kill_computer(settings):
 				
 				# Return the right command for srm
 				remove_command = return_command(settings['remove_program']['version'])
-	
+
+			# shred support
 			elif settings['remove_program']['path'].endswith("/shred"):
 			
 				# Use find
@@ -148,7 +149,18 @@ def kill_computer(settings):
 					remove_command = '-depth -type f -exec shred -f -n 3 -z -u {} \;'
 				else: # Fallback to 0-pass erasing
 					remove_command = '-depth -type f -exec shred -f -n 0 -z -u {} \;'
-		
+
+			# wipe support
+			elif settings['remove_program']['path'].endswith("/wipe"):
+				
+				if settings['remove_passes'] == 7: # US Dod compliant 7-pass
+					remove_command = '-frsc -Q 7'
+				elif settings['remove_passes'] == 3: # US DoE compliant 3-pass
+					remove_command = '-frsc -Q 3'
+				else: # Fallback to 0-pass erasing
+					remove_command = '-frsc -Q 0'
+
+			# rm support
 			elif settings['remove_program']['path'].endswith("/rm"):
 			
 				# Fallback to 0-pass erasing using rm
@@ -377,10 +389,10 @@ def startup_checks():
 		REMOVE_PROGRAM = dict({
 				'path':	REMOVE_PROGRAMS[1]
 		})
-	#elif REMOVE_PROGRAMS[2] != None: # wipe
-	#	REMOVE_PROGRAM = dict({
-	#			'path':	REMOVE_PROGRAMS[2]
-	#	})
+	elif REMOVE_PROGRAMS[2] != None: # wipe
+		REMOVE_PROGRAM = dict({
+				'path':	REMOVE_PROGRAMS[2]
+		})
 	elif REMOVE_PROGRAMS[3] != None: # rm
 		REMOVE_PROGRAM = dict({
 				'path':	REMOVE_PROGRAMS[3]
