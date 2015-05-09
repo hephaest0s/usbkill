@@ -182,6 +182,11 @@ def loop(whitelisted_devices, sleep_time, killer):
 		# List the current usb devices
 		current_devices = lsusb()
 		
+		# Check that no usbids are connected twice.
+		# Two devices with same usbid implied a usbid copy attack
+		if not len(current_devices) == len(set(current_devices)):
+			killer()
+		
 		# Check that all current devices are in the set of acceptable devices
 		for device in current_devices:
 			if device not in acceptable_devices:
@@ -190,7 +195,7 @@ def loop(whitelisted_devices, sleep_time, killer):
 		# Check that all start devices are still present in current devices
 		# Prevent multiple devices with the same Vendor/Product ID to be connected
 		for device in start_devices:
-			if current_devices.count(device) != 1:
+			if device not in current_devices:
 				killer()
 				
 		sleep(sleep_time)
