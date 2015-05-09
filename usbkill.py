@@ -179,6 +179,9 @@ def kill_computer(settings):
 	else:
 		# Linux-based systems - Will shutdown
 		os.system("poweroff -f")
+		
+	# Exit the process to prevent executing twice (or more) all commands
+	sys.exit(0)
 
 def lsusb():
 	# A Python version of the command 'lsusb' that returns a list of connected usbids
