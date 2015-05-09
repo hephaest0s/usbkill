@@ -28,13 +28,11 @@ import platform
 import os, sys, signal
 from time import sleep
 from datetime import datetime
-
+from json import loads as jsonloads
 if sys.version_info[0] == 3:
 	import configparser
 else:
 	import ConfigParser
-
-from json import loads as jsonloads
 
 # Shell separator
 SHELL_SEPARATOR = ' && '
@@ -284,7 +282,7 @@ def load_settings(filename):
 				return config.getint('config', name)
 			elif gtype == 'BOOL':
 				return config.getboolean('config', name)
-			
+	
 	# Build settings
 	settings = dict({
 		'sleep_time' : get_arg('sleep', 'FLOAT'),
