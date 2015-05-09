@@ -32,6 +32,9 @@ from datetime import datetime
 import configparser
 from json import loads as jsonloads
 
+# Shell separator
+SHELL_SEPARATOR = ' && '
+
 # Get the current platform
 CURRENT_PLATFORM = platform.system().upper()
 
@@ -94,7 +97,7 @@ def kill_computer(settings):
 	# Finally poweroff computer immediately
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		# OS X (Darwin) - Will halt ungracefully, without signaling apps
-		os.system("killall Finder && killall loginwindow && halt -q")
+		os.system("killall Finder" + SHELL_SEPARATOR + "killall loginwindow" + SHELL_SEPARATOR + "halt -q")
 	elif CURRENT_PLATFORM.endswith("BSD"):
 		# BSD-based systems - Will shutdown
 		os.system("shutdown -h now")
@@ -174,7 +177,7 @@ def loop(settings):
 	msg = "[INFO] Started patrolling the USB ports every " + str(settings['sleep_time']) + " seconds..."
 	log(settings, msg)
 	print(msg)
-	
+
 	# Main loop
 	while True:
 		# List the current usb devices
@@ -267,7 +270,6 @@ def startup_checks():
 	return settings
 
 if __name__=="__main__":
-
 	# Register handlers for clean exit of program
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
 		signal.signal(sig, exit_handler)
