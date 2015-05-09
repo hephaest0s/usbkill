@@ -391,9 +391,8 @@ def startup_checks():
 
 	# Warn the user if he does not have FileVault
 	if CURRENT_PLATFORM.startswith("DARWIN"):
-	
 		try:
-			if subprocess.check_output(["/usr/bin/fdesetup", "isactive"]).decode('utf-8').strip() != "true":
+			if subprocess.check_output(["/usr/bin/fdesetup", "status"]).decode('utf-8').strip() != "FileVault is On.":
 				print("[NOTICE] FileVault is disabled. Sensitive data SHOULD be encrypted.")
 		except subprocess.CalledProcessError as e:
 			print(e)
