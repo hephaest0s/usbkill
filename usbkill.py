@@ -132,7 +132,7 @@ def lsusb_darwin():
 			# Looks like, do the while again
 			for result_deep in result["_items"]:
 				# Check what's inside the _items array
-				check_inside(result_deep)
+				check_inside(result_deep, devices)
 					
 		except KeyError: {}
 		
