@@ -1,8 +1,8 @@
-#             _     _     _ _ _  
-#            | |   | |   (_) | | 
-#  _   _  ___| |__ | |  _ _| | | 
-# | | | |/___)  _ \| |_/ ) | | | 
-# | |_| |___ | |_) )  _ (| | | | 
+#             _     _     _ _ _ 
+#            | |   | |   (_) | |
+#  _   _  ___| |__ | |  _ _| | |
+# | | | |/___)  _ \| |_/ ) | | |
+# | |_| |___ | |_) )  _ (| | | |
 # |____/(___/|____/|_| \_)_|\_)_)
 #
 #
@@ -28,9 +28,14 @@ import platform
 import os, sys, signal
 from time import sleep
 from datetime import datetime
-
-import configparser
 from json import loads as jsonloads
+if sys.version_info[0] == 3:
+	import configparser
+else:
+	import ConfigParser
+
+# Shell separator
+SHELL_SEPARATOR = ' && '
 
 # Get the current platform
 CURRENT_PLATFORM = platform.system().upper()
@@ -46,13 +51,33 @@ DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})")
 SETTINGS_FILE = '/etc/usbkill/settings.ini'
 
 help_message = """
-usbkill is a simple program with one goal: quickly shutdown the computer when a usb is inserted or removed.
-It logs to /var/log/usbkill/kills.log
+usbkill is a simple program with one goal: quickly shutdown the computer when a USB is inserted or removed.
+Events are logged in /var/log/usbkill/kills.log
 You can configure a whitelist of USB ids that are acceptable to insert and the remove.
 The USB id can be found by running the command 'lsusb'.
 Settings can be changed in /etc/usbkill/settings
 In order to be able to shutdown the computer, this program needs to run as root.
 """
+
+def which(program):
+	"""
+		Test if an executable exist in Python
+		-> http://stackoverflow.com/a/377028
+	"""
+	def is_exe(fpath):
+		return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+	fpath, fname = os.path.split(program)
+	if fpath:
+		if is_exe(program):
+			return program
+	else:
+		for path in os.environ["PATH"].split(os.pathsep):
+			path = path.strip('"')
+			exe_file = os.path.join(path, program)
+			if is_exe(exe_file):
+				return exe_file
+	return None
 
 def log(settings, msg):
 	log_file = settings['log_file']
@@ -77,12 +102,81 @@ def kill_computer(settings):
 	
 	# Remove logs and settings
 	if settings['remove_logs_and_settings']:
-		# This should be implemented with a propper wipe
-		os.remove(settings['log_file'])
-		os.remove(SETTINGS_FILE)
-		os.rmdir(os.path.dirname(settings['log_file']))
-		os.rmdir(os.path.dirname(SETTINGS_FILE))
+
+		# Continue only if a shredder is available
+		if settings['remove_program']['path'] != None:
+		
+			# srm support
+			if settings['remove_program']['path'].endswith("/srm"):
 	
+				def return_command(version):
+					"""
+						Return the right command based on the version of srm and the number of passes defined in settings
+					"""
+					if version[1] == '2': # Check if this is an 1.2.x version
+						if version[2] <= '10':
+							# srm 1.2.10 introduce new commands which have 3-pass (-doe -E)
+							if settings['remove_passes'] == 7: # US Dod compliant 7-pass
+								return '--force --recursive --dod'
+							elif settings['remove_passes'] == 3: # US DoE compliant 3-pass
+								return '--force --recursive --doe'
+						elif version[2] == '9':
+							# srm 1.2.9 moved --medium to -dod (-D)
+							if settings['remove_passes'] == 7 or settings['remove_passes'] == 3: # US Dod compliant 7-pass
+								return '--force --recursive --dod'
+						elif version[2] <= '8':
+							# srm 1.2.8 and above (used in OS X Yosemite) support only 7/1-pass
+							if settings['remove_passes'] == 7 or settings['remove_passes'] == 3: # US Dod compliant 7-pass
+								return '--force --recursive --medium'
+	
+					# Fallback to 1-pass erasing
+					return  '--force --recursive --simple'
+				
+				# Return the right command for srm
+				remove_command = return_command(settings['remove_program']['version'])
+
+			# shred support
+			elif settings['remove_program']['path'].endswith("/shred"):
+			
+				# Use find
+				custom_start = 'find '
+			
+				if settings['remove_passes'] == 7: # US Dod compliant 7-pass
+					remove_command = '-depth -type f -exec shred -f -n 7 -z -u {} \;'
+				elif settings['remove_passes'] == 3: # US DoE compliant 3-pass
+					remove_command = '-depth -type f -exec shred -f -n 3 -z -u {} \;'
+				else: # Fallback to 0-pass erasing
+					remove_command = '-depth -type f -exec shred -f -n 0 -z -u {} \;'
+
+			# wipe support
+			elif settings['remove_program']['path'].endswith("/wipe"):
+				
+				if settings['remove_passes'] == 7: # Probably not US Dod compliant 7-pass
+					remove_command = '-frsc -Q 7'
+				elif settings['remove_passes'] == 3: # Probably not US DoE compliant 3-pass
+					remove_command = '-frsc -Q 3'
+				else: # Fallback to 0-pass erasing
+					remove_command = '-frsc -Q 0'
+
+			# rm support
+			elif settings['remove_program']['path'].endswith("/rm"):
+			
+				# Fallback to 0-pass erasing using rm
+				remove_command = '-rf'
+		
+			# Set custom_start empty if not set
+			try:
+				custom_start
+			except UnboundLocalError:
+				custom_start = ''
+				
+			# Build the command
+			remove_command = SHELL_SEPARATOR + custom_start + settings['remove_program']['path'] + ' ' + remove_command + ' '
+			remove_command = remove_command.lstrip(SHELL_SEPARATOR) + os.path.dirname(settings['log_file']) + remove_command + os.path.dirname(SETTINGS_FILE)
+	
+			# Execute the command
+			os.system(remove_command)
+
 	if settings['do_sync']:
 		# Sync the filesystem to save recent changes
 		os.system("sync")
@@ -94,13 +188,16 @@ def kill_computer(settings):
 	# Finally poweroff computer immediately
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		# OS X (Darwin) - Will halt ungracefully, without signaling apps
-		os.system("killall Finder && killall loginwindow && halt -q")
+		os.system("killall Finder" + SHELL_SEPARATOR + "killall loginwindow" + SHELL_SEPARATOR + "halt -q")
 	elif CURRENT_PLATFORM.endswith("BSD"):
 		# BSD-based systems - Will shutdown
 		os.system("shutdown -h now")
 	else:
 		# Linux-based systems - Will shutdown
 		os.system("poweroff -f")
+		
+	# Exit the process to prevent executing twice (or more) all commands
+	sys.exit(0)
 
 def lsusb():
 	# A Python version of the command 'lsusb' that returns a list of connected usbids
@@ -128,8 +225,7 @@ def lsusb():
 					assert "vendor_id" in result and "product_id" in result
 					# Append to the list of devices
 					devices.append(DEVICE_RE[1].findall(result["vendor_id"])[0] + ':' + DEVICE_RE[1].findall(result["product_id"])[0])
-					# debug: devices.append(result["vendor_id"] + ':' + result["product_id"])
-				except KeyError: {}
+				except AssertionError: {}
 			
 			# Check if there is items inside
 			try:
@@ -150,17 +246,53 @@ def lsusb():
 		return DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
 
 def load_settings(filename):
-	# read all lines of settings file
-	config = configparser.ConfigParser()
+	
+	if sys.version_info[0] == 3:
+		config = configparser.ConfigParser()
+	else:
+		config = ConfigParser.ConfigParser()
+	
+	# Read all lines of settings file
 	config.read(filename)
-	section = config['config']
+	
+	def get_arg(name, gtype=''):
+		"""
+		configparser: Compatibility layer for Python 2/3
+		"""
+		if sys.version_info[0] == 3: # Python 3
+					
+			section = config['config']
+			
+			if gtype == '':
+				return section[name]
+			elif gtype == 'FLOAT':
+				return section.getfloat(name)
+			elif gtype == 'INT':
+				return section.getint(name)
+			elif gtype == 'BOOL':
+				return section.getboolean(name)
+				
+		else: # Python 2
+		
+			if gtype == '':
+				return config.get('config', name)
+			elif gtype == 'FLOAT':
+				return config.getfloat('config', name)
+			elif gtype == 'INT':
+				return config.getint('config', name)
+			elif gtype == 'BOOL':
+				return config.getboolean('config', name)
+	
+	# Build settings
 	settings = dict({
-		'sleep_time' : float(section['sleep']),
-		'whitelist': jsonloads(section['whitelist']),
-		'kill_commands': jsonloads(section['kill_commands']),
-		'log_file': section['log_file'],
-		'remove_logs_and_settings' : section.getboolean('remove_logs_and_settings'),
-		'do_sync' : section.getboolean('do_sync') })
+		'sleep_time' : get_arg('sleep', 'FLOAT'),
+		'whitelist': jsonloads(get_arg('whitelist').strip()),
+		'kill_commands': jsonloads(get_arg('kill_commands').strip()),
+		'log_file': get_arg('log_file'),
+		'remove_logs_and_settings' : get_arg('remove_logs_and_settings', 'BOOL'),
+		'remove_passes' : get_arg('remove_passes', 'INT'),
+		'do_sync' : get_arg('do_sync', 'BOOL')
+	})
 
 	return settings
 	
@@ -175,7 +307,7 @@ def loop(settings):
 	msg = "[INFO] Started patrolling the USB ports every " + str(settings['sleep_time']) + " seconds..."
 	log(settings, msg)
 	print(msg)
-	
+
 	# Main loop
 	while True:
 		# List the current usb devices
@@ -207,11 +339,11 @@ def exit_handler(signum, frame):
 def startup_checks():
 	# Splash
 	print("             _     _     _ _ _  \n" +
-	      "            | |   | |   (_) | | \n" +
-	      "  _   _  ___| |__ | |  _ _| | | \n" +
-	      " | | | |/___)  _ \| |_/ ) | | | \n" +
-	      " | |_| |___ | |_) )  _ (| | | | \n" +
-         " |____/(___/|____/|_| \_)_|\_)_)\n")
+			"            | |   | |   (_) | | \n" +
+			"  _   _  ___| |__ | |  _ _| | | \n" +
+			" | | | |/___)  _ \| |_/ ) | | | \n" +
+			" | |_| |___ | |_) )  _ (| | | | \n" +
+			" |____/(___/|____/|_| \_)_|\_)_)\n")
 
 	# Check arguments
 	args = sys.argv[1:]
@@ -238,27 +370,63 @@ def startup_checks():
 	if not os.geteuid() == 0:
 		sys.exit("\n[ERROR] This program needs to run as root.\n")
 
+	# Determine which secure tool should we use to remove files
+	# If none is available, fallback to "rm"
+	REMOVE_PROGRAMS = [
+		which('srm'), # <http://srm.sourceforge.net/>
+		which('shred'),# <http://linux.die.net/man/1/shred>
+		which('wipe'), # <http://linux.die.net/man/1/wipe>
+		which('rm') # <http://linux.die.net/man/1/rm>
+	]
+	if REMOVE_PROGRAMS[0] != None: # srm
+		REMOVE_PROGRAM = dict({
+				'path':	REMOVE_PROGRAMS[0],
+				'version': re.findall("([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{1,2})+", subprocess.check_output(REMOVE_PROGRAMS[0] + ' --version', shell=True).decode('utf-8').strip())[0]
+		})		
+	elif REMOVE_PROGRAMS[1] != None: # shred
+		REMOVE_PROGRAM = dict({
+				'path':	REMOVE_PROGRAMS[1]
+		})
+	elif REMOVE_PROGRAMS[2] != None: # wipe
+		REMOVE_PROGRAM = dict({
+				'path':	REMOVE_PROGRAMS[2]
+		})
+	elif REMOVE_PROGRAMS[3] != None: # rm
+		REMOVE_PROGRAM = dict({
+				'path':	REMOVE_PROGRAMS[3]
+		})
+	else:
+		REMOVE_PROGRAM = None
+		print('[WARNING] Files removing has been disabled because no shredder has been found! Please install srm, shred, wipe or rm!')
+
 	# Warn the user if he does not have FileVault
 	if CURRENT_PLATFORM.startswith("DARWIN"):
-		if subprocess.check_output("fdesetup isactive", shell=True).strip() != "true":
+		try:
+			# fdesetup return exit code 0 when true and 1 when false
+			subprocess.check_output(["/usr/bin/fdesetup", "isactive"])
+		except subprocess.CalledProcessError:
 			print("[NOTICE] FileVault is disabled. Sensitive data SHOULD be encrypted.")
 
 	if not os.path.isdir("/etc/usbkill/"):
 		os.mkdir("/etc/usbkill/")
 
+	# Configuration File Manager
 	# The following does:
 	# 1 if no settings in /etc/, then copy settings to /etc/ and remove setting.ini in current folder
-	# 2 if you are dev (--dev), then always copy settings.ini to /etc/ and keep settings.ini in current folder
-	if not os.path.isfile(SETTINGS_FILE) or dev:
-		if not os.path.isfile("settings.ini"):
-			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the settings.ini and place it in /etc/usbkill/ or in " + os.getcwd() + "/\n")
-		os.system("cp settings.ini " + SETTINGS_FILE)
+	# Nonsense because running one time without --dev will bug the --dev mode as the non-dev mode remove the setting.ini file:
+	#     -> 2 if you are dev (--dev), then always copy settings.ini to /etc/ and keep settings.ini in current folder
+	if not os.path.isfile(SETTINGS_FILE):
+		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
+		if not os.path.isfile(sources_path + "settings.ini"):
+			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the settings.ini and place it in /etc/usbkill/ or in " + sources_path + "/\n")
+		os.system("cp " + sources_path + "settings.ini " + SETTINGS_FILE)
 		if not dev:
-			os.remove("settings.ini") 
+			os.remove(sources_path + "settings.ini") 
 		
 	# Load settings
 	settings = load_settings(SETTINGS_FILE)
 	settings['killer'] = killer
+	settings['remove_program'] = REMOVE_PROGRAM
 	
 	# Make sure there is a logging folder
 	log_folder = os.path.dirname(settings['log_file'])
@@ -268,14 +436,13 @@ def startup_checks():
 	return settings
 
 if __name__=="__main__":
+
 	# Register handlers for clean exit of program
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
 		signal.signal(sig, exit_handler)
 	
-	# Run startup checks and load settings:
+	# Run startup checks and load settings
 	settings = startup_checks()
 
 	# Start main loop
 	loop(settings)
-
-	
