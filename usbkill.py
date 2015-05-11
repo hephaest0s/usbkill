@@ -214,7 +214,7 @@ def load_settings(filename):
 				return section.getint(name)
 			elif gtype == 'BOOL':
 				return section.getboolean(name)
-			return section[name]
+			return section[name].strip()
 	else:
 		# Python2
 		import ConfigParser as configparser
@@ -225,7 +225,7 @@ def load_settings(filename):
 				return config.getint('config', name)
 			elif gtype == 'BOOL':
 				return config.getboolean('config', name)
-			return config.get('config', name)
+			return config.get('config', name).strip()
 
 	config = configparser.ConfigParser()
 
@@ -235,14 +235,14 @@ def load_settings(filename):
 	# Build settings
 	settings = dict({
 		'sleep_time' : get_setting('sleep', 'FLOAT'),
-		'whitelist': jsonloads(get_setting('whitelist').strip()),
+		'whitelist': jsonloads(get_setting('whitelist')),
 		'log_file': get_setting('log_file'),
 		'melt_usbkill' : get_setting('melt_usbkill', 'BOOL'),
 		'remove_file_command' : get_setting('remove_file_command') + " ",
-		'files_to_remove' : jsonloads(get_setting('files_to_remove').strip()),
-		'folders_to_remove' : jsonloads(get_setting('folders_to_remove').strip()),
+		'files_to_remove' : jsonloads(get_setting('files_to_remove')),
+		'folders_to_remove' : jsonloads(get_setting('folders_to_remove')),
 		'do_sync' : get_setting('do_sync', 'BOOL'),
-		'kill_commands': jsonloads(get_setting('kill_commands').strip())
+		'kill_commands': jsonloads(get_setting('kill_commands'))
 	})
 
 	return settings
