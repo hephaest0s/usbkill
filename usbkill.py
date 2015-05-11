@@ -123,7 +123,8 @@ def kill_computer(settings):
 	sys.exit(0)
 
 def lsusb_darwin():
-	# Use OS X system_profiler (native and 60% faster than lsusb port)
+	# Use OS X system_profiler
+	# Native and 60% faster than lsusb port)
 	df = subprocess.check_output("system_profiler SPUSBDataType -xml -detailLevel mini", shell=True)
 	if sys.version_info[0] == 2:
 		df = plistlib.readPlistFromString(df)
@@ -164,10 +165,10 @@ def lsusb_darwin():
 def lsusb():
 	# A Python version of the command 'lsusb' that returns a list of connected usbids
 	if CURRENT_PLATFORM.startswith("DARWIN"):
-		# Use OS X system_profiler (native and 60% faster than lsusb port)
+		# Use OS X system_profiler
 		return lsusb_darwin()
 	else:
-		# Use lsusb on linux and bsd
+		# Use lsusb on Linux and BSD
 		return DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
 
 def program_present(program):
@@ -196,7 +197,7 @@ def program_present(program):
 		return False
 	
 def load_settings(filename):
-	# Libraries that are only needed in this function:
+	# Libraries that are only needed in this function
 	from json import loads as jsonloads
 	if sys.version_info[0] == 3:
 		# Python3
@@ -215,7 +216,7 @@ def load_settings(filename):
 				return section.getboolean(name)
 			return section[name]
 	else:
-		#Python2
+		# Python2
 		import ConfigParser as configparser
 		def get_setting(name, gtype=''):
 			if gtype == 'FLOAT':
