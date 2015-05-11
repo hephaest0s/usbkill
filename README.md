@@ -35,6 +35,11 @@ There are 3 reasons (maybe more?) to use this tool:
 
 and more to come! including monitoring of other ports.
 
+### Supported command line arguments (mainly for devs):
+
+- --no-shut-down, execute all the (destructive) commands, but don't turn of computer.
+- --cs, copy program folder settings.ini to /etc/usbkill/settings.ini
+
 ### Contact
 
 [hephaestos@riseup.net](mailto:hephaestos@riseup.net) - PGP/GPG Fingerprint: 8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B
