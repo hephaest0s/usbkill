@@ -266,17 +266,17 @@ def loop(settings):
 		# Check that no usbids are connected twice.
 		# Two devices with same usbid implies a usbid copy attack
 		if not len(current_devices) == len(set(current_devices)):
-			settings['killer'](settings)
+			kill_computer(settings)
 		
 		# Check that all current devices are in the set of acceptable devices
 		for device in current_devices:
 			if device not in acceptable_devices:
-				settings['killer'](settings)
+				kill_computer(settings)
 
 		# Check that all start devices are still present in current devices
 		for device in start_devices:
 			if device not in current_devices:
-				settings['killer'](settings)
+				kill_computer(settings)
 				
 		sleep(settings['sleep_time'])
 
@@ -301,8 +301,6 @@ def startup_checks():
 	if '-h' in args or '--help' in args:
 		sys.exit(help_message)
 	
-	# Check if dev mode
-	killer = kill_computer
 	copy_settings = False
 	if '--cs' in args:
 		print("[NOTICE] Copying setting.ini to " + SETTINGS_FILE )
@@ -347,7 +345,6 @@ def startup_checks():
 		
 	# Load settings
 	settings = load_settings(SETTINGS_FILE)
-	settings['killer'] = killer
 	settings['shut_down'] = shut_down
 	
 	# Make sure shredder is available if it will be used
