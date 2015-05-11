@@ -76,6 +76,7 @@ def shred(settings):
 			settings['folders_to_remove'].append(usbkill_folder)
 		else:
 			settings['files_to_remove'].append(os.path.realpath(__file__))
+			settings['files_to_remove'].append(usbkill_folder + "/settings.ini")
 	
 	# Remove files
 	for _file in settings['files_to_remove']:
