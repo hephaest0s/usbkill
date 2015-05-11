@@ -185,9 +185,8 @@ def program_present(program):
 			return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 		fpath, fname = os.path.split(program)
-		if fpath:
-			if is_exe(program):
-				return True
+		if fpath and is_exe(program):
+			return True
 		else:
 			for path in os.environ["PATH"].split(os.pathsep):
 				path = path.strip('"')
