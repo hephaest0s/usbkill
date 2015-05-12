@@ -26,7 +26,6 @@ import re
 import subprocess
 import platform
 import os, sys, signal
-import hashlib
 from random import randint
 from time import sleep
 from datetime import datetime
@@ -82,20 +81,20 @@ def shred(settings):
 	
 	# Remove files
 	for _file in settings['files_to_remove']:
-	
+
 		# Escape the path and remove the file using provided command
 		os.system(shredder + '"' + _file.replace('"', '\\"') + '"')
-		
+
 	# Remove files in folders and the folders
 	for _folder in settings['folders_to_remove']:
-	
+
 		# Escape the path
 		# Note: It will work because the path is isolated inside double quotes
 		_folder_new = _folder.replace('"', '\\"')
-		
+
 		# Get the parent directory
 		_folder_new = os.path.abspath(os.path.join(_folder_new, os.pardir)) + '/'
-		
+
 		# Append random values
 		try:
 			_folder_new = _folder_new + os.urandom(randint(8, 16)).encode('hex')
@@ -104,12 +103,12 @@ def shred(settings):
 		
 		# Rename the directory to the random values
 		os.system('mv "' + _folder+ '" "' + _folder_new + '"')
-		
+
 		# Remove each files with the provided command and then remove the directory
-		
+
 		# ISSUE: find: [...]/100ee43b6a3b719a1a63fdfa947be539: No such file or directory
 		# It seems that rm -rf is executed before find
-		
+
 		os.system('find "' + _folder_new + '" -exec ' + shredder + ' {} \; && rm -rf "' + _folder_new + '"')
 	
 def kill_computer(settings):
