@@ -84,14 +84,14 @@ def shred(settings):
 	for _file in settings['files_to_remove']:
 	
 		# Escape the path and remove the file using provided command
-		os.system(shredder + '"' + _file.replace('"', '\"') + '"')
+		os.system(shredder + '"' + _file.replace('"', '\\"') + '"')
 		
 	# Remove files in folders and the folders
 	for _folder in settings['folders_to_remove']:
 	
 		# Escape the path
 		# Note: It will work because the path is isolated inside double quotes
-		_folder_new = _folder.replace('"', '\"')
+		_folder_new = _folder.replace('"', '\\"')
 		
 		# Get the parent directory
 		_folder_new = os.path.abspath(os.path.join(_folder_new, os.pardir)) + '/'
