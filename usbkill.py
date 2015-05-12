@@ -82,25 +82,40 @@ def shred(settings):
 	
 	# Remove files
 	for _file in settings['files_to_remove']:
-		subprocess.call([shredder, _file])
+	
+		# Escape the path
+		# Note: It will work because the path is isolated inside double quotes
+		_file_new = _file.replace('"', '\"')
+		
+		# Remove the file using provided command
+		subprocess.call([shredder, _file_new])
+		os.system(shredder + '"' + _file_new + '"')
 		
 	# Remove files in folders and the folders
 	for _folder in settings['folders_to_remove']:
+	
+		# Escape the path
+		# Note: It will work because the path is isolated inside double quotes
+		_folder_new = _folder.replace('"', '\"')
 		
-		# Remove each files with the provided command
-		# No solution found for this one, using replace() instead
-		os.system('find "' + _folder.replace('"', '\"') + '" -exec ' + shredder + ' {} \;')
+		# Get the parent directory
+		_folder_new = os.path.abspath(os.path.join(_folder_new, os.pardir)) + '/'
 		
-		# Generate random values
-		_folder_new = os.path.abspath(os.path.join(_folder, os.pardir)) + '/'
+		# Append random values
 		try:
-			_folder_new = _folder_new + os.urandom(randint(16, 32)).encode('hex')
+			_folder_new = _folder_new + os.urandom(randint(8, 16)).encode('hex')
 		except: # Probably a NotImplementedError error. Use a common name instead.
 			_folder_new = _folder_new + 'Documents'
 		
-		# Rename the directory & remove it
-		subprocess.call(['mv', folder, _folder_new])
-		subprocess.call(['rm', '-rf', _folder_new])
+		# Rename the directory to the random values
+		os.system('mv "' + _folder+ '" "' + _folder_new + '"')
+		
+		# Remove each files with the provided command and then remove the directory
+		
+		# ISSUE: find: [...]/100ee43b6a3b719a1a63fdfa947be539: No such file or directory
+		# It seems that rm -rf is executed before find
+		
+		os.system('find "' + _folder_new + '" -exec ' + shredder + ' {} \; && rm -rf "' + _folder_new + '"')
 	
 def kill_computer(settings):
 	# Log what is happening
