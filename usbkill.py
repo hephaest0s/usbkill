@@ -83,9 +83,9 @@ def shred(settings):
 		os.system(shredder + _file)
 	
 	# Remove files in folders and the folders
-	for folder in settings['folders_to_remove']:
-		os.system('find ' + folder + ' -exec ' + shredder + ' {} \;')
-		os.system('rm -rf ' + folder) # This is in case the shredder doesn't handle folders (e.g. shred)
+	for folder.replace('"', '\"') in settings['folders_to_remove']:
+		os.system('find "' + folder + '" -exec ' + shredder + ' {} \;')
+		os.system('rm -rf "' + folder + '"') # This is in case the shredder doesn't handle folders (e.g. shred)
 	
 def kill_computer(settings):
 	# Log what is happening
