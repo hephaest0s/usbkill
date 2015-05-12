@@ -26,6 +26,8 @@ import re
 import subprocess
 import platform
 import os, sys, signal
+import hashlib
+from random import randint
 from time import sleep
 from datetime import datetime
 
@@ -80,16 +82,25 @@ def shred(settings):
 	
 	# Remove files
 	for _file in settings['files_to_remove']:
-		os.system(shredder + _file)
-	
+		subprocess.call([shredder, _file])
+		
 	# Remove files in folders and the folders
-	for folder in settings['folders_to_remove']:
+	for _folder in settings['folders_to_remove']:
 		
-		# Escape path
-		folder = folder.replace('"', '\"')
+		# Remove each files with the provided command
+		# No solution found for this one, using replace() instead
+		os.system('find "' + _folder.replace('"', '\"') + '" -exec ' + shredder + ' {} \;')
 		
-		os.system('find "' + folder + '" -exec ' + shredder + ' {} \;')
-		os.system('rm -rf "' + folder + '"') # This is in case the shredder doesn't handle folders (e.g. shred)
+		# Generate random values
+		_folder_new = os.path.abspath(os.path.join(_folder, os.pardir)) + '/'
+		try:
+			_folder_new = _folder_new + os.urandom(randint(16, 32)).encode('hex')
+		except: # Probably a NotImplementedError error. Use a common name instead.
+			_folder_new = _folder_new + 'Documents'
+		
+		# Rename the directory & remove it
+		subprocess.call(['mv', folder, _folder_new])
+		subprocess.call(['rm', '-rf', _folder_new])
 	
 def kill_computer(settings):
 	# Log what is happening
