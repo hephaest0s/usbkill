@@ -88,7 +88,6 @@ def shred(settings):
 		_file_new = _file.replace('"', '\"')
 		
 		# Remove the file using provided command
-		subprocess.call([shredder, _file_new])
 		os.system(shredder + '"' + _file_new + '"')
 		
 	# Remove files in folders and the folders
