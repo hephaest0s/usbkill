@@ -83,12 +83,8 @@ def shred(settings):
 	# Remove files
 	for _file in settings['files_to_remove']:
 	
-		# Escape the path
-		# Note: It will work because the path is isolated inside double quotes
-		_file_new = _file.replace('"', '\"')
-		
-		# Remove the file using provided command
-		os.system(shredder + '"' + _file_new + '"')
+		# Escape the path and remove the file using provided command
+		os.system(shredder + '"' + _file.replace('"', '\"') + '"')
 		
 	# Remove files in folders and the folders
 	for _folder in settings['folders_to_remove']:
