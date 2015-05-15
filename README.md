@@ -29,7 +29,7 @@ Some reasons to use this tool:
 - Ability to change the check interval (default: 250ms).
 - Ability to melt the program on shut down.
 - Works with sleep mode (OS X).
-- No dependency except srm. ```shell sudo apt-get install secure-delete```
+- No dependency except srm. ```sudo apt-get install secure-delete```
 - Sensible defaults
 
 
