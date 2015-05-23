@@ -21,9 +21,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-#
 
-__version__ = "1.0-rc.1"
+__version__ = "1.0-rc.2"
 
 import re
 import subprocess
@@ -240,7 +239,8 @@ def load_settings(filename):
 		'files_to_remove' : jsonloads(get_setting('files_to_remove').strip()),
 		'folders_to_remove' : jsonloads(get_setting('folders_to_remove').strip()),
 		'do_sync' : get_setting('do_sync', 'BOOL'),
-		'kill_commands': jsonloads(get_setting('kill_commands').strip())
+		'kill_commands': jsonloads(get_setting('kill_commands').strip()),
+		'double_usbid_detection' : get_setting('double_usbid_detection', 'BOOL')
 	})
 
 	return settings
@@ -264,9 +264,9 @@ def loop(settings):
 		
 		# Check that no usbids are connected twice.
 		# Two devices with same usbid implies a usbid copy attack
-		if not len(current_devices) == len(set(current_devices)):
+		if settings['double_usbid_detection'] and not len(current_devices) == len(set(current_devices)):
 			kill_computer(settings)
-		
+
 		# Check that all current devices are in the set of acceptable devices
 		for device in current_devices:
 			if device not in acceptable_devices:
@@ -278,11 +278,6 @@ def loop(settings):
 				kill_computer(settings)
 				
 		sleep(settings['sleep_time'])
-
-def exit_handler(signum, frame):
-	print("\n[INFO] Exiting because exit signal was received\n")
-	log("[INFO] Exiting because exit signal was received")
-	sys.exit(0)
 
 def startup_checks():
 	# Splash
@@ -346,11 +341,13 @@ def startup_checks():
 	settings = load_settings(SETTINGS_FILE)
 	settings['shut_down'] = shut_down
 	
+	# Make sure no spaces a present in paths to be wiped.
 	for name in settings['folders_to_remove'] + settings['files_to_remove']:
 		if ' ' in name:
 			msg += "[ERROR][WARNING] '" + name + "'as specified in your settings.ini contains a space.\n"
 			sys.exit(msg)
 	
+	# Make sure srm is present if it will be used.
 	if settings['melt_usbkill'] or len(settings['folders_to_remove'] + settings['files_to_remove']) > 0:
 		if not program_present('srm'):
 			sys.exit("[ERROR] usbkill configured to destroy data, but srm not installed.\n")
@@ -365,12 +362,18 @@ def startup_checks():
 	return settings
 
 if __name__=="__main__":
+	# Run startup checks and load settings
+	settings = startup_checks()
+	
+	# Define exit handler now that settings are loaded...
+	def exit_handler(signum, frame):
+		print("\n[INFO] Exiting because exit signal was received\n")
+		log(settings, "[INFO] Exiting because exit signal was received")
+		sys.exit(0)
+	
 	# Register handlers for clean exit of program
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
 		signal.signal(sig, exit_handler)
 	
-	# Run startup checks and load settings
-	settings = startup_checks()
-
 	# Start main loop
 	loop(settings)
