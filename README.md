@@ -21,7 +21,7 @@ Some reasons to use this tool:
 > **Tip**: Additionally, you may use a cord to attach a USB key to your wrist. Then insert the key into your computer and start usbkill. If they steal your computer, the USB will be removed and the computer shuts down immediately.
 
 ### Feature List
-
+(version 1.0-rc.2)
 - Compatible with Linux, *BSD and OS X.
 - Shutdown the computer when there is USB activity.
 - Customizable. Define which commands should be executed just before shut down.
