@@ -25,6 +25,7 @@
 
 __version__ = "1.0-rc.2"
 
+import argparse
 import re
 import subprocess
 import platform
@@ -46,7 +47,7 @@ DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})")
 SETTINGS_FILE = '/etc/usbkill/settings.ini'
 SETTINGS_DIR = os.path.dirname(SETTINGS_FILE)
 
-help_message = """
+__doc__ = """
 usbkill is a simple program with one goal: quickly shutdown the computer when a USB is inserted or removed.
 Events are logged in /var/log/usbkill/kills.log
 You can configure a whitelist of USB ids that are acceptable to insert and the remove.
@@ -292,24 +293,16 @@ def startup_checks(args):
 			" | |_| |___ | |_) )  _ (| | | | \n" +
 			" |____/(___/|____/|_| \_)_|\_)_)\n")
 
-	# Check for help
-	if '-h' in args or '--help' in args:
-		sys.exit(help_message)
+	parser = argparse.ArgumentParser(description=__doc__,
+		formatter_class=argparse.RawDescriptionHelpFormatter)
+	parser.add_argument('--cs', dest='copy_settings', default=False, action='store_true',
+		help='Copy settings to the ini file')
+	parser.add_argument('--no-shut-down', dest='shut_down', default=True, action='store_false',
+		help='Run all commands, but do not shut down')
+	opts = parser.parse_args(args)
 
-	copy_settings = False
-	if '--cs' in args:
-		args.remove('--cs')
-		copy_settings = True
-
-	shut_down = True
-	if '--no-shut-down' in args:
+	if not opts.shut_down:
 		print("[NOTICE] Ready to execute all the (potentially destructive) commands, but NOT shut down the computer.")
-		args.remove('--no-shut-down')
-		shut_down = False
-
-	# Check all other args
-	if len(args) > 0:
-		sys.exit("\n[ERROR] Argument not understood. Can only understand -h\n")
 
 	# Check if program is run as root, else exit.
 	# Root is needed to power off the computer.
@@ -329,7 +322,7 @@ def startup_checks(args):
 
 	# On first time use copy settings.ini to /etc/usebkill/settings.ini
 	# If dev-mode, always copy and don't remove old settings
-	if not os.path.isfile(SETTINGS_FILE) or copy_settings:
+	if not os.path.isfile(SETTINGS_FILE) or opts.copy_settings:
 		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 		if not os.path.isfile(sources_path + "settings.ini"):
 			sys.exit("\n[ERROR] You have lost your settings file. "
@@ -337,12 +330,12 @@ def startup_checks(args):
 				+ SETTINGS_DIR + " or in " + sources_path + "/\n")
 		print("[NOTICE] Copying setting.ini to " + SETTINGS_FILE )
 		os.system("cp " + sources_path + "settings.ini " + SETTINGS_FILE)
-		if not copy_settings:
+		if not opts.copy_settings:
 			os.remove(sources_path + "settings.ini")
 
 	# Load settings
 	settings = load_settings(SETTINGS_FILE)
-	settings['shut_down'] = shut_down
+	settings['shut_down'] = opts.shut_down
 
 	# Make sure no spaces a present in paths to be wiped.
 	for name in settings['folders_to_remove'] + settings['files_to_remove']:
