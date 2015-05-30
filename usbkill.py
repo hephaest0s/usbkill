@@ -283,7 +283,7 @@ def loop(settings):
 
 		sleep(settings['sleep_time'])
 
-def startup_checks():
+def startup_checks(args):
 	# Splash
 	print("             _     _     _ _ _  \n" +
 			"            | |   | |   (_) | | \n" +
@@ -291,9 +291,6 @@ def startup_checks():
 			" | | | |/___)  _ \| |_/ ) | | | \n" +
 			" | |_| |___ | |_) )  _ (| | | | \n" +
 			" |____/(___/|____/|_| \_)_|\_)_)\n")
-
-	# Check arguments
-	args = sys.argv[1:]
 
 	# Check for help
 	if '-h' in args or '--help' in args:
@@ -367,9 +364,9 @@ def startup_checks():
 
 	return settings
 
-if __name__=="__main__":
+def main(args):
 	# Run startup checks and load settings
-	settings = startup_checks()
+	settings = startup_checks(args)
 
 	# Define exit handler now that settings are loaded...
 	def exit_handler(signum, frame):
@@ -383,3 +380,6 @@ if __name__=="__main__":
 
 	# Start main loop
 	loop(settings)
+
+if __name__=="__main__":
+	main(sys.argv[1:])
