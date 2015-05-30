@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#             _     _     _ _ _ 
+#             _     _     _ _ _
 #            | |   | |   (_) | |
 #  _   _  ___| |__ | |  _ _| | |
 # | | | |/___)  _ \| |_/ ) | | |
@@ -39,9 +39,8 @@ setup(name='usbkill',
       author_email='hephaestos@riseup.net',
       license='GPLv3',
       url='https://github.com/hephaest0s/usbkill',
-      
+
       packages=['usbkill'],
       scripts=[name('install/usbkill')],
       data_files=[ ('/etc/', [ name('install/usbkill.ini') ]) ]
      )
-
