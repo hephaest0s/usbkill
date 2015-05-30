@@ -27,6 +27,7 @@ __version__ = "1.0-rc.2"
 
 import argparse
 import re
+import shutil
 import subprocess
 import platform
 import os, sys, signal
@@ -323,15 +324,15 @@ def startup_checks(args):
 	# On first time use copy settings.ini to /etc/usebkill/settings.ini
 	# If dev-mode, always copy and don't remove old settings
 	if not os.path.isfile(SETTINGS_FILE) or opts.copy_settings:
-		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
-		if not os.path.isfile(sources_path + "settings.ini"):
+		sources_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.ini')
+		if not os.path.isfile(sources_path):
 			sys.exit("\n[ERROR] You have lost your settings file. "
 				"Get a new copy of the settings.ini and place it in "
-				+ SETTINGS_DIR + " or in " + sources_path + "/\n")
+				+ SETTINGS_DIR + " or in " + os.path.join(sources_path) + "/\n")
 		print("[NOTICE] Copying setting.ini to " + SETTINGS_FILE )
-		os.system("cp " + sources_path + "settings.ini " + SETTINGS_FILE)
+		shutil.copyfile(sources_path, SETTINGS_FILE)
 		if not opts.copy_settings:
-			os.remove(sources_path + "settings.ini")
+			os.remove(sources_path)
 
 	# Load settings
 	settings = load_settings(SETTINGS_FILE)
