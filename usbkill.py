@@ -43,15 +43,18 @@ DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})")
 
 # Set the settings filename here
 SETTINGS_FILE = '/etc/usbkill/settings.ini'
+SETTINGS_DIR = os.path.dirname(SETTINGS_FILE)
 
 help_message = """
 usbkill is a simple program with one goal: quickly shutdown the computer when a USB is inserted or removed.
 Events are logged in /var/log/usbkill/kills.log
 You can configure a whitelist of USB ids that are acceptable to insert and the remove.
 The USB id can be found by running the command 'lsusb'.
-Settings can be changed in /etc/usbkill/settings
+Settings can be changed in %(settings)s
 In order to be able to shutdown the computer, this program needs to run as root.
-"""
+""" % {
+	'settings': SETTINGS_FILE,
+}
 
 def log(settings, msg):
 	log_file = settings['log_file']
@@ -323,15 +326,17 @@ def startup_checks():
 		except subprocess.CalledProcessError:
 			print("[NOTICE] FileVault is disabled. Sensitive data SHOULD be encrypted.")
 
-	if not os.path.isdir("/etc/usbkill/"):
-		os.mkdir("/etc/usbkill/")
+	if not os.path.isdir(SETTINGS_DIR):
+		os.mkdir(SETTINGS_DIR)
 
 	# On first time use copy settings.ini to /etc/usebkill/settings.ini
 	# If dev-mode, always copy and don't remove old settings
 	if not os.path.isfile(SETTINGS_FILE) or copy_settings:
 		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 		if not os.path.isfile(sources_path + "settings.ini"):
-			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the settings.ini and place it in /etc/usbkill/ or in " + sources_path + "/\n")
+			sys.exit("\n[ERROR] You have lost your settings file. "
+				"Get a new copy of the settings.ini and place it in "
+				+ SETTINGS_DIR + " or in " + sources_path + "/\n")
 		print("[NOTICE] Copying setting.ini to " + SETTINGS_FILE )
 		os.system("cp " + sources_path + "settings.ini " + SETTINGS_FILE)
 		if not copy_settings:
