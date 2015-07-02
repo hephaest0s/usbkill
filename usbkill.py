@@ -294,6 +294,10 @@ def startup_checks():
 	# Check for help 
 	if '-h' in args or '--help' in args:
 		sys.exit(help_message)
+		
+	if '--version' in args:
+		print('usbkill', __version__)
+		sys.exit(0)
 	
 	copy_settings = False
 	if '--cs' in args:
