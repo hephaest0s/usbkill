@@ -22,7 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = "1.0-rc.2"
+__version__ = "1.0-rc.3"
 
 import re
 import subprocess
@@ -51,7 +51,38 @@ You can configure a whitelist of USB ids that are acceptable to insert and the r
 The USB id can be found by running the command 'lsusb'.
 Settings can be changed in /etc/usbkill/settings
 In order to be able to shutdown the computer, this program needs to run as root.
+
+Options:
+  -h --help:         Show this help
+     --version:      Print usbkill version and exit
+     --cs:           Copy program folder settings.ini to /etc/usbkill/settings.ini
+     --no-shut-down: Execute all the (destructive) commands you defined in settings.ini,
+                       but don't turn off the computer
 """
+
+class DeviceCountSet(dict):
+	def __init__(self, list):
+		count = {}
+
+		for i in list:
+			if i in count:
+				count[i] += 1
+			else:
+				count[i] = 1
+
+		super(DeviceCountSet,self).__init__(count)
+
+	def __add__(self, other):
+		ret = dict(self)
+		for k,v in other.items():
+			if k in ret:
+				if ret[k] < v:
+					ret[k] = v
+			else:
+				ret[k] = v
+
+		return ret
+
 
 def log(settings, msg):
 	log_file = settings['log_file']
@@ -163,10 +194,10 @@ def lsusb():
 	# A Python version of the command 'lsusb' that returns a list of connected usbids
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		# Use OS X system_profiler (native and 60% faster than lsusb port)
-		return lsusb_darwin()
+		return DeviceCountSet(lsusb_darwin())
 	else:
 		# Use lsusb on linux and bsd
-		return DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip())
+		return DeviceCountSet(DEVICE_RE[0].findall(subprocess.check_output("lsusb", shell=True).decode('utf-8').strip()))
 
 def program_present(program):
 	if sys.version_info[0] == 3:
@@ -250,7 +281,7 @@ def loop(settings):
 	# Allows only whitelisted usb devices to connect!
 	# Does not allow usb device that was present during program start to disconnect!
 	start_devices = lsusb()
-	acceptable_devices = set(start_devices + settings['whitelist'])
+	acceptable_devices = start_devices + DeviceCountSet(settings['whitelist'])
 	
 	# Write to logs that loop is starting:
 	msg = "[INFO] Started patrolling the USB ports every " + str(settings['sleep_time']) + " seconds..."
@@ -261,20 +292,21 @@ def loop(settings):
 	while True:
 		# List the current usb devices
 		current_devices = lsusb()
-		
-		# Check that no usbids are connected twice.
-		# Two devices with same usbid implies a usbid copy attack
-		if settings['double_usbid_detection'] and not len(current_devices) == len(set(current_devices)):
-			kill_computer(settings)
 
 		# Check that all current devices are in the set of acceptable devices
-		for device in current_devices:
+		#   and their cardinality is less or equal than allowed (if double_usbid_detection enabled)
+		for device, count in current_devices.items():
 			if device not in acceptable_devices:
+				kill_computer(settings)
+			elif settings['double_usbid_detection'] and acceptable_devices[device] < count:
 				kill_computer(settings)
 
 		# Check that all start devices are still present in current devices
-		for device in start_devices:
+		#   and their cardinality still the same (if double_usbid_detection enabled)
+		for device, count in start_devices.items():
 			if device not in current_devices:
+				kill_computer(settings)
+			elif settings['double_usbid_detection'] and current_devices[device] != count:
 				kill_computer(settings)
 				
 		sleep(settings['sleep_time'])
