@@ -61,28 +61,30 @@ Options:
 """
 
 class DeviceCountSet(dict):
+	# Warning: this class has behavior you may not expect.
+	# This is because the overloaded __add__ is a mixture of add and overwrite
 	def __init__(self, list):
-		count = {}
-
+		count = dict()
 		for i in list:
 			if i in count:
 				count[i] += 1
 			else:
 				count[i] = 1
-
 		super(DeviceCountSet,self).__init__(count)
 
 	def __add__(self, other):
-		ret = dict(self)
-		for k,v in other.items():
-			if k in ret:
-				if ret[k] < v:
-					ret[k] = v
-			else:
-				ret[k] = v
-
-		return ret
-
+		newdic = dict(self)
+		if type(other) in [tuple, list]:
+			for k in other:
+				newdic[k] = 1
+		else:
+			for k,v in other.items():
+				if k in newdic:
+					if newdic[k] < v:
+						newdic[k] = v
+				else:
+					newdic[k] = v
+		return newdic
 
 def log(settings, msg):
 	log_file = settings['log_file']
@@ -123,14 +125,13 @@ def kill_computer(settings):
 	# Shred as specified in settings
 	shred(settings)
 	
-	if settings['do_sync']:
-		# Sync the filesystem to save recent changes
-		os.system("sync")
-		
 	# Execute kill commands in order.
 	for command in settings['kill_commands']:
 		os.system(command)
 		
+	if settings['do_sync']:
+		# Sync the filesystem to save recent changes
+		os.system("sync")
 	else:
 		# If syncing is risky because it might take too long, then sleep for 5ms.
 		# This will still allow for syncing in most cases.
@@ -140,7 +141,7 @@ def kill_computer(settings):
 		# Finally poweroff computer immediately
 		if CURRENT_PLATFORM.startswith("DARWIN"):
 			# OS X (Darwin) - Will halt ungracefully, without signaling apps
-			os.system("killall Finder && killall loginwindow && halt -q")
+			os.system("killall Finder ; killall loginwindow ; halt -q")
 		elif CURRENT_PLATFORM.endswith("BSD"):
 			# BSD-based systems - Will shutdown
 			os.system("shutdown -h now")
@@ -193,7 +194,7 @@ def lsusb_darwin():
 def lsusb():
 	# A Python version of the command 'lsusb' that returns a list of connected usbids
 	if CURRENT_PLATFORM.startswith("DARWIN"):
-		# Use OS X system_profiler (native and 60% faster than lsusb port)
+		# Use OS X system_profiler (native, 60% faster, and doesn't need the lsusb port)
 		return DeviceCountSet(lsusb_darwin())
 	else:
 		# Use lsusb on linux and bsd
@@ -263,7 +264,7 @@ def load_settings(filename):
 	# Build settings
 	settings = dict({
 		'sleep_time' : get_setting('sleep', 'FLOAT'),
-		'whitelist': jsonloads(get_setting('whitelist').strip()),
+		'whitelist': DeviceCountSet(jsonloads(get_setting('whitelist').strip())),
 		'log_file': get_setting('log_file'),
 		'melt_usbkill' : get_setting('melt_usbkill', 'BOOL'),
 		'remove_file_command' : get_setting('remove_file_command') + " ",
@@ -281,7 +282,7 @@ def loop(settings):
 	# Allows only whitelisted usb devices to connect!
 	# Does not allow usb device that was present during program start to disconnect!
 	start_devices = lsusb()
-	acceptable_devices = start_devices + DeviceCountSet(settings['whitelist'])
+	acceptable_devices = start_devices + settings['whitelist']
 	
 	# Write to logs that loop is starting:
 	msg = "[INFO] Started patrolling the USB ports every " + str(settings['sleep_time']) + " seconds..."
@@ -294,11 +295,12 @@ def loop(settings):
 		current_devices = lsusb()
 
 		# Check that all current devices are in the set of acceptable devices
-		#   and their cardinality is less or equal than allowed (if double_usbid_detection enabled)
+		#   and their cardinality is less than or equal to what is allowed (if double_usbid_detection enabled)
 		for device, count in current_devices.items():
 			if device not in acceptable_devices:
 				kill_computer(settings)
-			elif settings['double_usbid_detection'] and acceptable_devices[device] < count:
+			if settings['double_usbid_detection'] and count > acceptable_devices[device]:
+				# Count of a usbid is larger than what is acceptable (too many devices)
 				kill_computer(settings)
 
 		# Check that all start devices are still present in current devices
@@ -306,7 +308,8 @@ def loop(settings):
 		for device, count in start_devices.items():
 			if device not in current_devices:
 				kill_computer(settings)
-			elif settings['double_usbid_detection'] and current_devices[device] != count:
+			if settings['double_usbid_detection'] and count > current_devices[device]:
+				# Count of a usbid device is lower than at program start (not enough devices)
 				kill_computer(settings)
 				
 		sleep(settings['sleep_time'])
