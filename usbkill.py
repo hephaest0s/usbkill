@@ -74,7 +74,7 @@ class DeviceCountSet(dict):
 
 	def __add__(self, other):
 		newdic = dict(self)
-		if type(other) in [tuple, list]:
+		if type(other) in ['tuple', 'list']:
 			for k in other:
 				newdic[k] = 1
 		else:
