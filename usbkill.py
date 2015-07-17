@@ -42,20 +42,20 @@ if CURRENT_PLATFORM.startswith("DARWIN"):
 DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})") ]
 
 # Set the settings filename here
-SETTINGS_FILE = '/etc/usbkill/settings.ini'
+SETTINGS_FILE = '/usr/local/etc/usbkill/settings.ini'
 
 help_message = """
 usbkill is a simple program with one goal: quickly shutdown the computer when a USB is inserted or removed.
 Events are logged in /var/log/usbkill/kills.log
 You can configure a whitelist of USB ids that are acceptable to insert and the remove.
 The USB id can be found by running the command 'lsusb'.
-Settings can be changed in /etc/usbkill/settings
+Settings can be changed in /usr/local/etc/usbkill/settings
 In order to be able to shutdown the computer, this program needs to run as root.
 
 Options:
   -h --help:         Show this help
      --version:      Print usbkill version and exit
-     --cs:           Copy program folder settings.ini to /etc/usbkill/settings.ini
+     --cs:           Copy program folder settings.ini to /usr/local/etc/usbkill/settings.ini
      --no-shut-down: Execute all the (destructive) commands you defined in settings.ini,
                        but don't turn off the computer
 """
@@ -88,11 +88,11 @@ class DeviceCountSet(dict):
 
 def log(settings, msg):
 	log_file = settings['log_file']
-	
+
 	contents = '\n{0} {1}\nCurrent state:\n'.format(str(datetime.now()), msg)
 	with open(log_file, 'a+') as log:
 		log.write(contents)
-	
+
 	# Log current USB state
 	if CURRENT_PLATFORM.startswith("DARWIN"):
 		os.system("system_profiler SPUSBDataType >> " + log_file)
@@ -101,7 +101,7 @@ def log(settings, msg):
 
 def shred(settings):
 	shredder = settings['remove_file_command']
-	
+
 	# List logs and settings to be removed
 	if settings['melt_usbkill']:
 		settings['folders_to_remove'].append(os.path.dirname(settings['log_file']))
@@ -112,23 +112,23 @@ def shred(settings):
 		else:
 			settings['files_to_remove'].append(os.path.realpath(__file__))
 			settings['files_to_remove'].append(usbkill_folder + "/settings.ini")
-	
+
 	# Remove files and folders
 	for _file in settings['files_to_remove'] + settings['folders_to_remove']:
 		os.system(shredder + _file)
-	
+
 def kill_computer(settings):
 	# Log what is happening:
 	if not settings['melt_usbkill']: # No need to spend time on logging if logs will be removed
 		log(settings, "Detected a USB change. Dumping the list of connected devices and killing the computer...")
-	
+
 	# Shred as specified in settings
 	shred(settings)
-	
+
 	# Execute kill commands in order.
 	for command in settings['kill_commands']:
 		os.system(command)
-		
+
 	if settings['do_sync']:
 		# Sync the filesystem to save recent changes
 		os.system("sync")
@@ -136,7 +136,7 @@ def kill_computer(settings):
 		# If syncing is risky because it might take too long, then sleep for 5ms.
 		# This will still allow for syncing in most cases.
 		sleep(0.05)
-	
+
 	if settings['shut_down']: # Use argument --no-shut-down to prevent a shutdown.
 		# Finally poweroff computer immediately
 		if CURRENT_PLATFORM.startswith("DARWIN"):
@@ -148,7 +148,7 @@ def kill_computer(settings):
 		else:
 			# Linux-based systems - Will shutdown
 			os.system("poweroff -f")
-		
+
 	# Exit the process to prevent executing twice (or more) all commands
 	sys.exit(0)
 
@@ -168,29 +168,29 @@ def lsusb_darwin():
 		try:
 			result["Built-in_Device"]
 		except KeyError:
-		
+
 			# Check if vendor_id/product_id is available for this one
 			try:
 				assert "vendor_id" in result and "product_id" in result
 				# Append to the list of devices
 				devices.append(DEVICE_RE[1].findall(result["vendor_id"])[0] + ':' + DEVICE_RE[1].findall(result["product_id"])[0])
 			except AssertionError: {}
-		
+
 		# Check if there is items inside
 		try:
 			# Looks like, do the while again
 			for result_deep in result["_items"]:
 				# Check what's inside the _items array
 				check_inside(result_deep, devices)
-					
+
 		except KeyError: {}
-		
+
 	# Run the loop
 	devices = []
 	for result in df[0]["_items"]:
 		check_inside(result, devices)
 	return devices
-	
+
 def lsusb():
 	# A Python version of the command 'lsusb' that returns a list of connected usbids
 	if CURRENT_PLATFORM.startswith("DARWIN"):
@@ -203,9 +203,9 @@ def lsusb():
 def program_present(program):
 	if sys.version_info[0] == 3:
 		# Python3
-		from shutil import which 
+		from shutil import which
 		return which(program) != None
-		
+
 	else:
 		"""
 			Test if an executable exist in Python2
@@ -224,7 +224,7 @@ def program_present(program):
 				if is_exe(exe_file):
 					return True
 		return False
-	
+
 def load_settings(filename):
 	# Libraries that are only needed in this function:
 	from json import loads as jsonloads
@@ -260,7 +260,7 @@ def load_settings(filename):
 
 	# Read all lines of settings file
 	config.read(filename)
-		
+
 	# Build settings
 	settings = dict({
 		'sleep_time' : get_setting('sleep', 'FLOAT'),
@@ -276,14 +276,14 @@ def load_settings(filename):
 	})
 
 	return settings
-	
+
 def loop(settings):
 	# Main loop that checks every 'sleep_time' seconds if computer should be killed.
 	# Allows only whitelisted usb devices to connect!
 	# Does not allow usb device that was present during program start to disconnect!
 	start_devices = lsusb()
 	acceptable_devices = start_devices + settings['whitelist']
-	
+
 	# Write to logs that loop is starting:
 	msg = "[INFO] Started patrolling the USB ports every " + str(settings['sleep_time']) + " seconds..."
 	log(settings, msg)
@@ -311,7 +311,7 @@ def loop(settings):
 			if settings['double_usbid_detection'] and count > current_devices[device]:
 				# Count of a usbid device is lower than at program start (not enough devices)
 				kill_computer(settings)
-				
+
 		sleep(settings['sleep_time'])
 
 def startup_checks():
@@ -325,26 +325,26 @@ def startup_checks():
 
 	# Check arguments
 	args = sys.argv[1:]
-	
+
 	# Check for help 
 	if '-h' in args or '--help' in args:
 		sys.exit(help_message)
-		
+
 	if '--version' in args:
 		print('usbkill', __version__)
 		sys.exit(0)
-	
+
 	copy_settings = False
 	if '--cs' in args:
 		args.remove('--cs')
 		copy_settings = True
-		
+
 	shut_down = True
 	if '--no-shut-down' in args:
 		print("[NOTICE] Ready to execute all the (potentially destructive) commands, but NOT shut down the computer.")
 		args.remove('--no-shut-down')
 		shut_down = False
-	
+
 	# Check all other args
 	if len(args) > 0:
 		sys.exit("\n[ERROR] Argument not understood. Can only understand -h\n")
@@ -365,7 +365,7 @@ def startup_checks():
 	if not os.path.isdir("/etc/usbkill/"):
 		os.mkdir("/etc/usbkill/")
 
-	# On first time use copy settings.ini to /etc/usebkill/settings.ini
+	# On first time use copy settings.ini to /usr/local/etc/usebkill/settings.ini
 	# If dev-mode, always copy and don't remove old settings
 	if not os.path.isfile(SETTINGS_FILE) or copy_settings:
 		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
@@ -374,45 +374,45 @@ def startup_checks():
 		print("[NOTICE] Copying setting.ini to " + SETTINGS_FILE )
 		os.system("cp " + sources_path + "settings.ini " + SETTINGS_FILE)
 		if not copy_settings:
-			os.remove(sources_path + "settings.ini") 
-		
+			os.remove(sources_path + "settings.ini")
+
 	# Load settings
 	settings = load_settings(SETTINGS_FILE)
 	settings['shut_down'] = shut_down
-	
+
 	# Make sure no spaces a present in paths to be wiped.
 	for name in settings['folders_to_remove'] + settings['files_to_remove']:
 		if ' ' in name:
 			msg += "[ERROR][WARNING] '" + name + "'as specified in your settings.ini contains a space.\n"
 			sys.exit(msg)
-	
+
 	# Make sure srm is present if it will be used.
 	if settings['melt_usbkill'] or len(settings['folders_to_remove'] + settings['files_to_remove']) > 0:
 		if not program_present('srm'):
 			sys.exit("[ERROR] usbkill configured to destroy data, but srm not installed.\n")
 		if not settings['remove_file_command'].startswith('srm'):
 			sys.exit("[ERROR] remove_file_command should start with `srm'. srm should be used for automated data overwrite.\n")
-	
+
 	# Make sure there is a logging folder
 	log_folder = os.path.dirname(settings['log_file'])
 	if not os.path.isdir(log_folder):
 		os.mkdir(log_folder)
-	
+
 	return settings
 
 if __name__=="__main__":
 	# Run startup checks and load settings
 	settings = startup_checks()
-	
+
 	# Define exit handler now that settings are loaded...
 	def exit_handler(signum, frame):
 		print("\n[INFO] Exiting because exit signal was received\n")
 		log(settings, "[INFO] Exiting because exit signal was received")
 		sys.exit(0)
-	
+
 	# Register handlers for clean exit of program
 	for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, ]:
 		signal.signal(sig, exit_handler)
-	
+
 	# Start main loop
 	loop(settings)
