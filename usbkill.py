@@ -42,20 +42,20 @@ if CURRENT_PLATFORM.startswith("DARWIN"):
 DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})") ]
 
 # Set the settings filename here
-SETTINGS_FILE = '/etc/usbkill/settings.ini'
+SETTINGS_FILE = '/usr/local/etc/usbkill/settings.ini'
 
 help_message = """
 usbkill is a simple program with one goal: quickly shutdown the computer when a USB is inserted or removed.
 Events are logged in /var/log/usbkill/kills.log
 You can configure a whitelist of USB ids that are acceptable to insert and the remove.
 The USB id can be found by running the command 'lsusb'.
-Settings can be changed in /etc/usbkill/settings
+Settings can be changed in /usr/local/etc/usbkill/settings
 In order to be able to shutdown the computer, this program needs to run as root.
 
 Options:
   -h --help:         Show this help
      --version:      Print usbkill version and exit
-     --cs:           Copy program folder settings.ini to /etc/usbkill/settings.ini
+     --cs:           Copy program folder settings.ini to /usr/local/etc/usbkill/settings.ini
      --no-shut-down: Execute all the (destructive) commands you defined in settings.ini,
                        but don't turn off the computer
 """
@@ -365,7 +365,7 @@ def startup_checks():
 	if not os.path.isdir("/etc/usbkill/"):
 		os.mkdir("/etc/usbkill/")
 
-	# On first time use copy settings.ini to /etc/usebkill/settings.ini
+	# On first time use copy settings.ini to /usr/local/etc/usebkill/settings.ini
 	# If dev-mode, always copy and don't remove old settings
 	if not os.path.isfile(SETTINGS_FILE) or copy_settings:
 		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
