@@ -1,0 +1,110 @@
+.TH usbkill 1 "1.0-rc.3 (June 2014)" "usbkill" "usbkill manual"
+
+.SH NAME
+usbkill - anti-forensic kill-switch
+.SH SYNOPSIS
+.B usbkill
+.I "[OPTION]"
+.SH DESCRIPTION
+usbkill is an anti-forensic kill-switch that waits for a change on your
+USB ports and then immediately shuts down your computer.
+
+Some reasons to use this tool:
+
+* In case the police or other thugs come busting in (or steal your laptop
+from you when you are at a public library as happened to Ross). The police
+commonly uses a « mouse jiggler » to keep the screensaver and sleep mode
+from activating.
+.P
+* You don’t want someone to retrieve documents (such as private keys) from
+your computer or install malware/backdoors via USB.
+.P
+* You want to improve the security of your (Full Disk Encrypted) home or
+corporate server (e.g. Your Raspberry).
+.P
+.B "[!] Important:"
+Make sure to use (partial) disk encryption! Otherwise they will get in
+anyway.
+
+.B "Tip:"
+Additionally, you may use a cord to attach a USB key to your
+wrist. Then insert the key into your computer and start
+.I usbkill.
+If they steal your computer, the USB will be removed and the computer
+shuts down immediately.
+
+.SS Feature List
+* Compatible with Linux, *BSD and OS X.
+.P
+* Shutdown the computer when there is USB activity.
+.P
+* Customizable. Define which commands should be executed just before shut
+down.
+.P
+* Ability to whitelist a USB device.
+.P
+* Ability to change the check interval (default: 250ms).
+.P
+* Ability to melt the program on shut down.
+.P
+* Works with sleep mode (OS X).
+.P
+* No dependency except srm iff you want
+.I usbkill
+to delete files/folders
+for you.
+.P
+* Sensible defaults.
+
+.SH OPTIONS
+
+.TP
+\f3-h --help\f1
+Show help message, exit.
+.TP
+\f3--version\f1
+Show version of the program, exit.
+.TP
+\f3--no-shut-down\f1
+If a malicious change on the USB ports is detected,
+execute all the (destructive) commands you defined in settings.ini,
+but don’t turn off the computer.
+.TP
+\f3--cs\f1
+Copy program folder settings.ini to /etc/usbkill/settings.ini.
+
+.SH PLATFORMS
+.TP
+.I usbkill
+is known to work on Linux, *BSD and OSX.
+
+.SH FILES
+.TP
+.IP "/usr/local/etc/usbkill/settings.ini"
+Configuration file for
+.I usbkill.
+Use this to define log file placement, device whitelist etc.
+
+.SH BUGS
+.TP
+None that we know of.
+
+.SH AUTHORS
+.I usbkill
+was written by
+.B hephaest0s <hephaestos@riseup.net>.
+See file
+.I AUTHORS
+for a list of people contributing to this project.
+.P
+The
+.I git
+repository of
+.I usbkill
+can be found at
+.BI https://github.com/hephaest0s/usbkill
+.P
+This manual page was written by Mads 'MadsRC' Christensen <mads@v42.dk>.
+
+.SH SEE ALSO
+.BR usbkill-settings.ini (5)

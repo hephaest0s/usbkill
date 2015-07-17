@@ -1,0 +1,116 @@
+.TH usbkill-settings-ini 5 "1.0-rc.3 (June 2014)" "settings.ini" "usbkill manual"
+.SH NAME
+settings.ini - usbkill configuration file
+.SH SYNOPSIS
+.B /usr/local/etc/usbkill/settings.ini
+.SH DESCRIPTION
+.I usbkill(1)
+reads configuration data from
+.B /usr/local/etc/settings.ini
+.P
+The possible settings, case-sensitive, are:
+.SS whitelist = []
+Whitelist command lists the USB ids that you want whitelisted. How to get
+the correct usbid for your trusted USB device?
+.P
+.B BSD/Linux
+.P
+run "lsusb", the usbid will looks like this:
+.B 0123:9abc
+.P
+.B Mac OS X
+.P
+run "system_profiler SPUSBDataType" in the terminal and find the
+Vendor/Product ID, it will looks like this:
+.P
+	> Product ID: 0x8403
+.P
+	> Vendor ID: 0x05ac  (Apple Inc.)
+.P
+Take the 4 characters after the 0x and merge them (Vendor ID first), it
+will look like:
+.B 05ac:8403
+.P
+Other parties can copy your trusted usbid to another usb device!
+Use whitelist command and single space separation as follows:
+.P
+.B whitelist = ["4c2a:d2b0", "0b2d:a2c4"]
+.P
+To allow multiple (2 and 4) USBs with same id:
+[("4c2a:d2b0":2), ("0b2d:a2c4":4)]
+
+.SS sleep = 0.25
+Allow for a certain amount of sleep time between checks, e.g. 0.25 seconds
+
+.SS double_usbid_detection = True
+Perform USB id copy detection?
+This option does not work on all platforms, and can therefore be turned
+off.
+
+.SS log_file = /var/log/usbkill/usbkill.log
+Log file location
+
+.SS melt_usbkill = False
+Remove log (folder) and settings (folder) and usbkill program (folder)
+upon kill?
+This might be usefull if you only encrypt portions of your disk (home
+folder or volumes).
+Make sure to sync the system (using do_sync=True) if this is a critical
+feature for you.
+(True/False)
+
+.SS remove_file_command = srm
+ use srm to remove files.
+ try srm --help or [x] to see what options are available
+ [x] http://srm.sourceforge.net/srm.html
+ Example: remove_file_command = srm -zlf
+
+.SS files_to_remove = []
+What files should be removed upon a kill?
+Provide absolute paths to the files (paths that start with '/' or '~').
+Use " not ' to define the strings, e.g.:
+files_to_remove = ["~/Desktop/contacts.txt",
+"~/Desktop/dpr_journal.txt"]
+
+.SS folders_to_remove = [ ]
+What folders should be removed upon a kill?
+Provide absolute paths to the files (paths that start with '/' or '~').
+Content in folders will be removed recursively
+Use " not ' to define the strings, e.g.:
+folders_to_remove = ["~/Desktop/sensitive/",
+"~/Desktop/dpr_journal_entries/"]
+
+.SS do_sync = True
+Should usbkill sync the file system for you?
+This should not be a problem on most computers.
+Sync will save some of your work to disk before killing your computer.
+
+.SS kill_commands = [ ]
+Custom kill commands that can not be specified using above described
+mechanisms.
+This is where you want to release volumes, etc.
+These commands will run in order and as root, as the last commands.
+Sync should be activated once more if you want to sync
+Use " not ' to define the strings, e.g.:
+kill_commands = [ "bash ~/scripts/destroy.sh", "sync" ]
+
+.SH FILES
+.B /usr/local/etc/usbkill/settings.ini
+
+.SH AUTHORS
+.I usbkill
+was written by
+.B hephaest0s <hephaestos@riseup.net>.
+See file
+.B AUTHORS
+for a list of people
+contributing to this project.
+
+The git repository of usbkill can be found at
+.I https://github.com/hephaest0s/usbkill
+
+This manual page was written by Mads 'MadsRC' Christensen <mads@v42.dk>
+
+.SH SEE ALSO
+.B usbkill(1)
+
