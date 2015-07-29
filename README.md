@@ -32,8 +32,9 @@ Some reasons to use this tool:
 - Ability to whitelist a USB device.
 - Ability to change the check interval (default: 250ms).
 - Ability to melt the program on shut down.
+- RAM and swap wiping.
 - Works with sleep mode (OS X).
-- No dependency except srm iff you want usbkill to delete files/folders for you. ```sudo apt-get install secure-delete```
+- No dependency except secure-delete iff you want usbkill to delete files/folders for you or if you want to wipe RAM or swap. ```sudo apt-get install secure-delete```
 - Sensible defaults
 
 
