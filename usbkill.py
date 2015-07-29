@@ -22,7 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = "1.0-rc.3"
+__version__ = "1.0-rc.4"
 
 import re
 import subprocess
@@ -42,14 +42,14 @@ if CURRENT_PLATFORM.startswith("DARWIN"):
 DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})") ]
 
 # Set the settings filename here
-SETTINGS_FILE = '/etc/usbkill/settings.ini'
+SETTINGS_FILE = '/etc/settings.ini'
 
 help_message = """
 usbkill is a simple program with one goal: quickly shutdown the computer when a USB is inserted or removed.
 Events are logged in /var/log/usbkill/kills.log
 You can configure a whitelist of USB ids that are acceptable to insert and the remove.
 The USB id can be found by running the command 'lsusb'.
-Settings can be changed in /etc/usbkill/settings
+Settings can be changed in /etc/settings.ini
 In order to be able to shutdown the computer, this program needs to run as root.
 
 Options:
@@ -100,7 +100,7 @@ def log(settings, msg):
 		os.system("lsusb >> " + log_file)
 
 def shred(settings):
-	shredder = settings['remove_file_command']
+	shredder = settings['remove_file_cmd']
 	
 	# List logs and settings to be removed
 	if settings['melt_usbkill']:
@@ -115,7 +115,7 @@ def shred(settings):
 	
 	# Remove files and folders
 	for _file in settings['files_to_remove'] + settings['folders_to_remove']:
-		os.system(shredder + _file)
+		os.system(shredder + _file )
 	
 def kill_computer(settings):
 	# Log what is happening:
@@ -137,7 +137,15 @@ def kill_computer(settings):
 		# This will still allow for syncing in most cases.
 		sleep(0.05)
 	
-	if settings['shut_down']: # Use argument --no-shut-down to prevent a shutdown.
+	# Wipe ram and/or swap
+	if settings['do_wipe_ram'] and settings['do_wipe_swap']:
+		os.system(settings['wipe_ram_cmd'] + " & " + settings['wipe_swap_cmd'])
+	elif settings['do_wipe_ram']:
+		os.system(settings['wipe_ram_cmd'])
+	elif settings['do_wipe_swap']:
+		os.system(settings['wipe_swap_cmd'])
+	
+	if settings['shut_down']: # (Use argument --no-shut-down to prevent a shutdown.)
 		# Finally poweroff computer immediately
 		if CURRENT_PLATFORM.startswith("DARWIN"):
 			# OS X (Darwin) - Will halt ungracefully, without signaling apps
@@ -267,13 +275,22 @@ def load_settings(filename):
 		'whitelist': DeviceCountSet(jsonloads(get_setting('whitelist').strip())),
 		'log_file': get_setting('log_file'),
 		'melt_usbkill' : get_setting('melt_usbkill', 'BOOL'),
-		'remove_file_command' : get_setting('remove_file_command') + " ",
+		'remove_file_cmd' : get_setting('remove_file_cmd') + " ",
 		'files_to_remove' : jsonloads(get_setting('files_to_remove').strip()),
 		'folders_to_remove' : jsonloads(get_setting('folders_to_remove').strip()),
 		'do_sync' : get_setting('do_sync', 'BOOL'),
-		'kill_commands': jsonloads(get_setting('kill_commands').strip()),
-		'double_usbid_detection' : get_setting('double_usbid_detection', 'BOOL')
+		'kill_commands': jsonloads(get_setting('kill_commands').strip())
 	})
+	
+	settings['do_wipe_ram'] = False
+	if get_setting('do_wipe_ram', 'BOOL'):
+		settings['do_wipe_ram'] = True
+		settings['wipe_ram_cmd'] = get_setting('wipe_ram_cmd') + " "
+	
+	settings['do_wipe_swap'] = False
+	if get_setting('do_wipe_swap', 'BOOL'):
+		settings['do_wipe_swap'] = True
+		settings['wipe_swap_cmd'] = get_setting('wipe_swap_cmd') + " "
 
 	return settings
 	
@@ -295,21 +312,23 @@ def loop(settings):
 		current_devices = lsusb()
 
 		# Check that all current devices are in the set of acceptable devices
-		#   and their cardinality is less than or equal to what is allowed (if double_usbid_detection enabled)
+		#   and their cardinality is less than or equal to what is allowed 
 		for device, count in current_devices.items():
 			if device not in acceptable_devices:
+				# A device with unknown usbid detected
 				kill_computer(settings)
-			if settings['double_usbid_detection'] and count > acceptable_devices[device]:
-				# Count of a usbid is larger than what is acceptable (too many devices)
+			if count > acceptable_devices[device]:
+				# Count of a usbid is larger than what is acceptable (too many devices sharing usbid)
 				kill_computer(settings)
 
 		# Check that all start devices are still present in current devices
-		#   and their cardinality still the same (if double_usbid_detection enabled)
+		#   and their cardinality still the same 
 		for device, count in start_devices.items():
 			if device not in current_devices:
+				# A usbid has disappeared completely
 				kill_computer(settings)
-			if settings['double_usbid_detection'] and count > current_devices[device]:
-				# Count of a usbid device is lower than at program start (not enough devices)
+			if count > current_devices[device]:
+				# Count of a usbid device is lower than at program start (not enough devices for given usbid)
 				kill_computer(settings)
 				
 		sleep(settings['sleep_time'])
@@ -362,15 +381,12 @@ def startup_checks():
 		except subprocess.CalledProcessError:
 			print("[NOTICE] FileVault is disabled. Sensitive data SHOULD be encrypted.")
 
-	if not os.path.isdir("/etc/usbkill/"):
-		os.mkdir("/etc/usbkill/")
-
 	# On first time use copy settings.ini to /etc/usebkill/settings.ini
 	# If dev-mode, always copy and don't remove old settings
 	if not os.path.isfile(SETTINGS_FILE) or copy_settings:
 		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 		if not os.path.isfile(sources_path + "settings.ini"):
-			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the settings.ini and place it in /etc/usbkill/ or in " + sources_path + "/\n")
+			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the settings.ini and place it in /etc/ or in " + sources_path + "/\n")
 		print("[NOTICE] Copying setting.ini to " + SETTINGS_FILE )
 		os.system("cp " + sources_path + "settings.ini " + SETTINGS_FILE)
 		if not copy_settings:
@@ -390,8 +406,20 @@ def startup_checks():
 	if settings['melt_usbkill'] or len(settings['folders_to_remove'] + settings['files_to_remove']) > 0:
 		if not program_present('srm'):
 			sys.exit("[ERROR] usbkill configured to destroy data, but srm not installed.\n")
-		if not settings['remove_file_command'].startswith('srm'):
+		if not settings['remove_file_cmd'].startswith('srm'):
 			sys.exit("[ERROR] remove_file_command should start with `srm'. srm should be used for automated data overwrite.\n")
+	# Make sure sdmem is present if it will be used.
+	if settings['do_wipe_ram']:
+		if not program_present('sdmem'):
+			sys.exit("[ERROR] usbkill configured to destroy data, but srm not installed.\n")
+		if not settings['wipe_ram_cmd'].startswith('sdmem'):
+			sys.exit("[ERROR] wipe_ram_cmd should start with `sdmem'. sdmem should be used for automated data overwrite.\n")
+	# Make sure sswap is present if it will be used.
+	if settings['do_wipe_swap']:
+		if not program_present('sswap'):
+			sys.exit("[ERROR] usbkill configured to destroy data, but srm not installed.\n")
+		if not settings['wipe_swap_cmd'].startswith('sswap'):
+			sys.exit("[ERROR] wipe_swap_cmd should start with `sswap'. sswap should be used for automated data overwrite.\n")
 	
 	# Make sure there is a logging folder
 	log_folder = os.path.dirname(settings['log_file'])
