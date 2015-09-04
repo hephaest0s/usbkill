@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #             _     _     _ _ _ 
 #            | |   | |   (_) | |
 #  _   _  ___| |__ | |  _ _| | |
@@ -55,8 +57,8 @@ In order to be able to shutdown the computer, this program needs to run as root.
 Options:
   -h --help:         Show this help
      --version:      Print usbkill version and exit
-     --cs:           Copy program folder settings.ini to /etc/usbkill/settings.ini
-     --no-shut-down: Execute all the (destructive) commands you defined in settings.ini,
+     --cs:           Copy program folder usbkill.ini to /etc/usbkill/usbkill.ini
+     --no-shut-down: Execute all the (destructive) commands you defined in usbkill.ini,
                        but don't turn off the computer
 """
 
@@ -111,7 +113,7 @@ def shred(settings):
 			settings['folders_to_remove'].append(usbkill_folder)
 		else:
 			settings['files_to_remove'].append(os.path.realpath(__file__))
-			settings['files_to_remove'].append(usbkill_folder + "/settings.ini")
+			settings['files_to_remove'].append(usbkill_folder + "/usbkill.ini")
 	
 	# Remove files and folders
 	for _file in settings['files_to_remove'] + settings['folders_to_remove']:
@@ -381,16 +383,14 @@ def startup_checks():
 		except subprocess.CalledProcessError:
 			print("[NOTICE] FileVault is disabled. Sensitive data SHOULD be encrypted.")
 
-	# On first time use copy settings.ini to /etc/usebkill.ini
+	# On first time use copy usbkill.ini to /etc/usebkill.ini
 	# If dev-mode, always copy and don't remove old settings
 	if not os.path.isfile(SETTINGS_FILE) or copy_settings:
 		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
-		if not os.path.isfile(sources_path + "settings.ini"):
-			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the settings.ini and place it in /etc/ or in " + sources_path + "/\n")
-		print("[NOTICE] Copying setting.ini to " + SETTINGS_FILE )
-		os.system("cp " + sources_path + "settings.ini " + SETTINGS_FILE)
-		if not copy_settings:
-			os.remove(sources_path + "settings.ini") 
+		if not os.path.isfile(sources_path + "install/usbkill.ini"):
+			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the usbkill.ini and place it in /etc/ or in " + sources_path + "/\n")
+		print("[NOTICE] Copying install/setting.ini to " + SETTINGS_FILE )
+		os.system("cp " + sources_path + "install/usbkill.ini " + SETTINGS_FILE)
 		
 	# Load settings
 	settings = load_settings(SETTINGS_FILE)
@@ -399,7 +399,7 @@ def startup_checks():
 	# Make sure no spaces a present in paths to be wiped.
 	for name in settings['folders_to_remove'] + settings['files_to_remove']:
 		if ' ' in name:
-			msg += "[ERROR][WARNING] '" + name + "'as specified in your settings.ini contains a space.\n"
+			msg += "[ERROR][WARNING] '" + name + "'as specified in your usbkill.ini contains a space.\n"
 			sys.exit(msg)
 	
 	# Make sure srm is present if it will be used.
@@ -428,7 +428,7 @@ def startup_checks():
 	
 	return settings
 
-if __name__=="__main__":
+def go():
 	# Run startup checks and load settings
 	settings = startup_checks()
 	
@@ -444,3 +444,8 @@ if __name__=="__main__":
 	
 	# Start main loop
 	loop(settings)
+	
+if __name__=="__main__":
+	go()
+	
+
