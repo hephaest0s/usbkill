@@ -40,7 +40,7 @@ setup(name='usbkill',
       license='GPLv3',
       url='https://github.com/hephaest0s/usbkill',
       
-      packages=[name('usbkill')],
+      packages=['usbkill'],
       scripts=[name('install/usbkill')],
       data_files=[ ('/etc/', [ name('install/usbkill.ini') ]) ]
      )
