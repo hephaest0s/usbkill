@@ -68,7 +68,9 @@ class DeviceCountSet(dict):
 	def __init__(self, list):
 		count = dict()
 		for i in list:
-			if i in count:
+			if type(i) == dict:
+				count[i.keys()[0]] = i.values()[0]
+			elif i in count:
 				count[i] += 1
 			else:
 				count[i] = 1
@@ -386,8 +388,8 @@ def startup_checks():
 	# On first time use copy usbkill.ini to /etc/usebkill.ini
 	# If dev-mode, always copy and don't remove old settings
 	if not os.path.isfile(SETTINGS_FILE) or copy_settings:
-		sources_path = os.path.dirname(os.path.realpath(__file__)) + '/'
-		if not os.path.isfile(sources_path + "install/usbkill.ini"):
+		sources_path = os.path.dirname(os.path.realpath(__file__))
+		if not os.path.isfile(os.path.join(sources_path, "install/usbkill.ini")):
 			sys.exit("\n[ERROR] You have lost your settings file. Get a new copy of the usbkill.ini and place it in /etc/ or in " + sources_path + "/\n")
 		print("[NOTICE] Copying install/setting.ini to " + SETTINGS_FILE )
 		os.system("cp " + sources_path + "install/usbkill.ini " + SETTINGS_FILE)
