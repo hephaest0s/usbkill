@@ -12,6 +12,9 @@ or
 sudo python3 usbkill.py
 ```
 
+Related project; same idea, but implemented as a Linux driver: https://github.com/NateBrune/silk-guardian
+
+
 ### Why?
 
 Some reasons to use this tool:
@@ -48,5 +51,4 @@ Some reasons to use this tool:
 ### Contact
 
 [hephaestos@riseup.net](mailto:hephaestos@riseup.net) - PGP/GPG Fingerprint: 8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B
-
 
