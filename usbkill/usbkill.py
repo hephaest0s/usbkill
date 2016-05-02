@@ -183,11 +183,26 @@ def lsusb_darwin():
 		
 			# Check if vendor_id/product_id is available for this one
 			try:
+				# Ensure vendor_id and product_id are present
 				assert "vendor_id" in result and "product_id" in result
+
+				try:
+					vendor_id = DEVICE_RE[1].findall(result["vendor_id"])[0]
+				except IndexError:
+					# Assume this is not an standard vendor_id (probably apple_vendor_id)
+					vendor_id = result["vendor_id"];
+
+				try:
+					product_id = DEVICE_RE[1].findall(result["product_id"])[0]
+				except IndexError:
+					# Assume this is not an standard product_id (probably apple_vendor_id)
+					product_id = result["product_id"];
+
 				# Append to the list of devices
-				devices.append(DEVICE_RE[1].findall(result["vendor_id"])[0] + ':' + DEVICE_RE[1].findall(result["product_id"])[0])
+				devices.append(vendor_id + ':' + product_id)
+
 			except AssertionError: {}
-		
+
 		# Check if there is items inside
 		try:
 			# Looks like, do the while again
