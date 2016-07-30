@@ -1,1 +1,1 @@
-from usbkill import go
+from .usbkill import go
