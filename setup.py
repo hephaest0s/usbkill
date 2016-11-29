@@ -27,13 +27,20 @@
 
 from distutils.core import setup
 from os import path
+import sys
+import shutil
 
 DIRNAME = path.dirname(path.realpath(__file__))
 
 name = lambda x : path.join(DIRNAME, x)
 
+if "--osx-daemon" in sys.argv:
+		shutil.copy2('install/local.usbkill.plist', '/Library/LaunchDaemons/local.usbkill.plist'),
+		print "Installing as OSX daemon..."
+		sys.argv.remove("--osx-daemon")
+
 setup(name='usbkill',
-      version='1.0-rc.4',
+			version='1.0-rc.4',
       description='usbkill is an anti-forensic kill-switch that waits for a change on your USB ports and then immediately shuts down your computer.',
       author='Hephaestos',
       author_email='hephaestos@riseup.net',
