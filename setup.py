@@ -36,7 +36,7 @@ name = lambda x : path.join(DIRNAME, x)
 
 if "--osx-daemon" in sys.argv:
 		shutil.copy2('install/local.usbkill.plist', '/Library/LaunchDaemons/local.usbkill.plist'),
-		print "Installing as OSX daemon...""
+		print "Installing as OSX daemon..."
 		sys.argv.remove("--osx-daemon")
 
 setup(name='usbkill',
