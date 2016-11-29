@@ -2,6 +2,27 @@
 
 « usbkill » is an anti-forensic kill-switch that waits for a change on your USB ports and then immediately shuts down your computer.
 
+To install:
+```shell
+sudo python setup.py install
+```
+
+To install as a daemon on OSX:
+```shell
+sudo python setup.py install --osx-daemon
+```
+
+If installing as a daemon on OSX, if you wish to use a usb device, first run:
+```shell
+sudo launchctl stop USBKill
+```
+and restart the daemon when you have removed the device:
+```shell
+sudo launchctl start USBKill
+```
+please read the usbkill.ini (/etc/usbkill.ini after installation) for instructions on whitelisting usb devices!
+
+
 To run:
 
 ```shell
