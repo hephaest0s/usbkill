@@ -28,7 +28,7 @@ Some reasons to use this tool:
 > **Tip**: Additionally, you may use a cord to attach a USB key to your wrist. Then insert the key into your computer and start usbkill. If they steal your computer, the USB will be removed and the computer shuts down immediately.
 
 ### Feature List
-(version 1.0-rc.4)
+(Current version 1.0-rc.4)
 - Compatible with Linux, *BSD and OS X.
 - Shutdown the computer when there is USB activity.
 - Customizable. Define which commands should be executed just before shut down.
@@ -37,18 +37,18 @@ Some reasons to use this tool:
 - Ability to melt the program on shut down.
 - RAM and swap wiping.
 - Works with sleep mode (OS X).
-- No dependency except secure-delete iff you want usbkill to delete files/folders for you or if you want to wipe RAM or swap. ```sudo apt-get install secure-delete```
+- No dependency except [secure-delete](https://launchpad.net/ubuntu/+source/secure-delete) if you want usbkill to delete files/folders for you or if you want to wipe RAM or swap. Secure-delete can be installed on *nix systems like so: `sudo apt-get install secure-delete`
 - Sensible defaults
 
 
 ### Supported command line arguments (partially for devs):
 
-- -h or --help: show help message, exit.
-- --version: show version of the program, exit.
-- --no-shut-down: if a malicious change on the USB ports is detected, execute all the (destructive) commands you defined in settings.ini, but don’t turn off the computer.
-- --cs: Copy program folder settings.ini to /etc/usbkill/settings.ini
+- `-h` or `--help`: show help message, exit.
+- `--version`: show version of the program, exit.
+- `--no-shut-down`: if a malicious change on the USB ports is detected, execute all the (destructive) commands you defined in settings.ini, but don’t turn off the computer.
+- `--cs`: Copy program folder settings.ini to /etc/usbkill/settings.ini
 
 ### Contact
 
-[hephaestos@riseup.net](mailto:hephaestos@riseup.net) - PGP/GPG Fingerprint: 8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B
+[hephaestos@riseup.net](mailto:hephaestos@riseup.net) - PGP/GPG Fingerprint: `8764 EF6F D5C1 7838 8D10 E061 CF84 9CE5 42D0 B12B`
 
