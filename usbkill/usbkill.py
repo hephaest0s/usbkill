@@ -228,8 +228,8 @@ def lsusb_darwin():
 
 def lsusb_freenas():
 	#Use the 'usbconfig' utility that is included in Freenas
-	vid = DeviceCountSet(DEVICE_RE[2].findall(subprocess.check_output("usbconfig dump_device_desc", shell=True).decode('utf-8').strip()))
-	pid = DeviceCountSet(DEVICE_RE[3].findall(subprocess.check_output("usbconfig dump_device_desc", shell=True).decode('utf-8').strip()))
+	vid = DEVICE_RE[2].findall(subprocess.check_output("usbconfig dump_device_desc", shell=True).decode('utf-8').strip())
+	pid = DEVICE_RE[3].findall(subprocess.check_output("usbconfig dump_device_desc", shell=True).decode('utf-8').strip())
 	devices = []
 	for listing in range(len(vid)):
 		devices.append(vid[listing][1] + ":" + pid[listing][1])
