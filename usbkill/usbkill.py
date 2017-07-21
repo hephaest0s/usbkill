@@ -47,7 +47,7 @@ if CURRENT_PLATFORM.startswith("DARWIN"):
 # Element 3 = REGEX parsed usbconfig product id, expressed as a tuple
 # There probably is a better way to compile this so it shows up as substring group, but regex makes me wanna kms
 # Doing it the proper way would enable reading other attributes (like serial number) correctly
-DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})"), re.compile("(idVendor)\s=\s0x(\w+)"), re.compile("(idProduct)\s=0x\s(\w+)") ]
+DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})"), re.compile("(idVendor)\s=\s0x(\w+)"), re.compile("(idProduct)\s=\s0x(\w+)") ]
 
 # Set the settings filename here
 SETTINGS_FILE = '/etc/usbkill.ini'
