@@ -47,7 +47,7 @@ if CURRENT_PLATFORM.startswith("DARWIN"):
 # Element 3 = REGEX parsed usbconfig product id, expressed as a tuple
 # There probably is a better way to compile this so it shows up as substring group, but regex makes me wanna kms
 # Doing it the proper way would enable reading other attributes (like serial number) correctly
-DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})"), re.compile("(idVendor)\s=\s(\w+)"), re.compile("(idProduct)\s=\s(\w+)") ]
+DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})"), re.compile("(idVendor)\s=\s0x(\w+)"), re.compile("(idProduct)\s=0x\s(\w+)") ]
 
 # Set the settings filename here
 SETTINGS_FILE = '/etc/usbkill.ini'
@@ -231,7 +231,7 @@ def lsusb_freenas():
 	vid = DeviceCountSet(DEVICE_RE[2].findall(subprocess.check_output("usbconfig dump_device_desc", shell=True).decode('utf-8').strip()))
 	pid = DeviceCountSet(DEVICE_RE[3].findall(subprocess.check_output("usbconfig dump_device_desc", shell=True).decode('utf-8').strip()))
 	devices = []
-	for listing in vid:
+	for listing in range(len(vid)):
 		devices.append(vid[listing][1] + ":" + pid[listing][1])
 	return devices
 
@@ -241,6 +241,7 @@ def lsusb():
 		# Use OS X system_profiler (native, 60% faster, and doesn't need the lsusb port)
 		return DeviceCountSet(lsusb_darwin())
 	elif ("freenas" in platform.uname()[3]):
+		# Freenas does not ship with lsusb. Use usbconfig instead.
 		return DeviceCountSet(lsusb_freenas())
 	else:
 		# Use lsusb on linux and bsd
