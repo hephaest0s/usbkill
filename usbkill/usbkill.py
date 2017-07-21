@@ -41,7 +41,13 @@ if CURRENT_PLATFORM.startswith("DARWIN"):
 	import plistlib
 
 # We compile this function beforehand for efficiency.
-DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})") ]
+# Element 0 = REGEX parsed output of lsusb
+# Element 1 = REGEX parsed hex USB ID (used in both lsusb)
+# Element 2 = REGEX parsed usbconfig vendor id, expressed as a tuple
+# Element 3 = REGEX parsed usbconfig product id, expressed as a tuple
+# There probably is a better way to compile this so it shows up as substring group, but regex makes me wanna kms
+# Doing it the proper way would enable reading other attributes (like serial number) correctly
+DEVICE_RE = [ re.compile(".+ID\s(?P<id>\w+:\w+)"), re.compile("0x([0-9a-z]{4})"), re.compile("(idVendor)\s=\s(\w+)"), re.compile("(idProduct)\s=\s(\w+)") ]
 
 # Set the settings filename here
 SETTINGS_FILE = '/etc/usbkill.ini'
@@ -222,9 +228,13 @@ def lsusb_darwin():
 
 def lsusb_freenas():
 	#Use the 'usbconfig' utility that is included in Freenas
-	#Not sure defining this in a separate function is necessary, but it seems clearer this way
-	return DeviceCountSet(DEVICE_RE[0].findall(subprocess.check_output("usbconfig", shell=True).decode('utf-8').strip()))
-	
+	vid = DeviceCountSet(DEVICE_RE[2].findall(subprocess.check_output("usbconfig dump_device_desc", shell=True).decode('utf-8').strip()))
+	pid = DeviceCountSet(DEVICE_RE[3].findall(subprocess.check_output("usbconfig dump_device_desc", shell=True).decode('utf-8').strip()))
+	devices = []
+	for listing in vid:
+		devices.append(vid[listing][1] + ":" + pid[listing][1])
+	return devices
+
 def lsusb():
 	# A Python version of the command 'lsusb' that returns a list of connected usbids
 	if CURRENT_PLATFORM.startswith("DARWIN"):
