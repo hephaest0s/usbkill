@@ -137,7 +137,7 @@ def kill_computer(settings):
 		# Sync the filesystem to save recent changes
 		os.system("sync")
 	else:
-		# If syncing is risky because it might take too long, then sleep for 5ms.
+		# If syncing is risky because it might take too long, then sleep for 50ms.
 		# This will still allow for syncing in most cases.
 		sleep(0.05)
 	
